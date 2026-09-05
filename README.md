@@ -8,7 +8,6 @@ configs/
 ├── README.md
 ├── setup.sh                    # 一键初始化: 默认 --init 基础配置，--nvim 等场景需先 --init
 ├── sync.sh                     # UPDATE=1 遍历 install/ 更新已安装的工具与配置（含 # sync: skip 的除外）
-├── migrate.sh                  # 迁移脚本: 将本地 clone 的 origin 切换到 mytoolsets 仓库并快进
 ├── install/                    # 安装脚本；CN=1 走国内代理，UPDATE=1 更新模式（未安装跳过，配置类按需增删改）
 │   ├── agent-prompts.sh
 │   ├── clash-for-linux.sh
