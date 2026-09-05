@@ -12,7 +12,8 @@
     "npm:pi-web-access",
     "npm:@narumitw/pi-plan-mode",
     "npm:pi-footer",
-    "npm:@juicesharp/rpiv-ask-user-question"
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:pi-zentui"
   ],
   "defaultThinkingLevel": "high",
   "hideThinkingBlock": true,
