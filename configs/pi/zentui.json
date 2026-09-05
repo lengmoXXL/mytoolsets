@@ -1,0 +1,15 @@
+{
+  "components": {
+    "footer": {
+      "styles": {
+        "starship": {
+          "format": "$context",
+          "separator": "dot",
+          "extensionStatuses": {
+            "defaultPlacement": "left"
+          }
+        }
+      }
+    }
+  }
+}

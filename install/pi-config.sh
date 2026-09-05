@@ -21,7 +21,7 @@ fi
 
 mkdir -p "$TARGET"
 
-for name in models.json settings.json pi-plan-mode.json; do
+for name in models.json settings.json pi-plan-mode.json zentui.json; do
     tmp_config="$(mktemp)"
     cp "$SOURCE/$name" "$tmp_config"
     write_file_if_changed "$TARGET/$name" "$tmp_config"
@@ -44,11 +44,6 @@ sync_dir() {
 
 sync_dir "$SOURCE/themes" "$TARGET/themes" "pi themes"
 sync_dir "$SOURCE/agents" "$TARGET/agents" "pi agents"
-
-mkdir -p "$TARGET/extensions"
-tmp_config="$(mktemp)"
-cp "$SOURCE/pi-footer.json" "$tmp_config"
-write_file_if_changed "$TARGET/extensions/pi-footer.json" "$tmp_config"
 
 # 只镜像自研 *.ts（node_modules、tsconfig 等编辑器辅助文件不装）；
 # 目标目录里 pi 包管理的文件（subagent/ 等）被 exclude 保护，不会被 --delete 删除

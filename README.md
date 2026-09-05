@@ -99,8 +99,8 @@ configs/
 │   ├── pi/
 │   │   ├── models.json
 │   │   ├── settings.json
-│   │   ├── pi-footer.json
 │   │   ├── pi-plan-mode.json
+│   │   ├── zentui.json
 │   │   ├── agents/
 │   │   │   └── worker.md
 │   │   ├── extensions/
