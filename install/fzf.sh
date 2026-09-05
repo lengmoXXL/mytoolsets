@@ -44,8 +44,6 @@ done
 fzf_bin=""
 if [[ -x "$BIN_DIR/fzf" ]]; then
     fzf_bin="$BIN_DIR/fzf"
-elif command -v fzf &>/dev/null; then
-    fzf_bin="$(command -v fzf)"
 fi
 
 download_needed=false

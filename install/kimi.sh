@@ -11,14 +11,15 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
 KIMI_VERSION="0.41.0"
+KIMI_BIN="$HOME/.kimi-code/bin/kimi"
 
-if [[ "${UPDATE:-}" == "1" ]] && ! command -v kimi &>/dev/null; then
+if [[ "${UPDATE:-}" == "1" && ! -x "$KIMI_BIN" ]]; then
     echo "未安装，跳过: kimi"
     exit 0
 fi
 
-if command -v kimi &>/dev/null; then
-    installed_version="$(kimi --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+if [[ -x "$KIMI_BIN" ]]; then
+    installed_version="$("$KIMI_BIN" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
     if [[ "${UPDATE:-}" != "1" ]]; then
         echo "kimi 已安装: $installed_version"
         exit 0
@@ -32,4 +33,4 @@ fi
 
 curl -fsSL https://code.kimi.com/kimi-code/install.sh | KIMI_VERSION="$KIMI_VERSION" bash
 
-kimi --version
+"$KIMI_BIN" --version

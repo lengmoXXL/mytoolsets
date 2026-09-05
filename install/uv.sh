@@ -36,8 +36,6 @@ UV_BIN="$BIN_DIR/uv"
 uv_cmd=""
 if [[ -x "$UV_BIN" ]]; then
     uv_cmd="$UV_BIN"
-elif command -v uv &>/dev/null; then
-    uv_cmd="$(command -v uv)"
 fi
 
 if [[ "${UPDATE:-}" == "1" && -z "$uv_cmd" ]]; then

@@ -33,15 +33,15 @@ done
 
 mkdir -p "$BIN_DIR"
 
-if [[ "${UPDATE:-}" == "1" ]] && ! command -v gh &>/dev/null; then
+if [[ "${UPDATE:-}" == "1" && ! -x "$BIN_DIR/gh" ]]; then
     echo "未安装，跳过: gh"
     exit 0
 fi
 
-if command -v gh &>/dev/null; then
-    installed_version="$(gh --version | head -1 | awk '{print $3}')"
+if [[ -x "$BIN_DIR/gh" ]]; then
+    installed_version="$("$BIN_DIR/gh" --version | head -1 | awk '{print $3}')"
     if [[ "${UPDATE:-}" != "1" ]]; then
-        echo "gh 已安装: $(command -v gh) ($installed_version)"
+        echo "gh 已安装: $BIN_DIR/gh ($installed_version)"
         exit 0
     fi
     if [[ "$installed_version" == "${GH_VERSION#v}" ]]; then

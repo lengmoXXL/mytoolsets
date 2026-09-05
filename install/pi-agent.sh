@@ -83,8 +83,6 @@ ensure_node
 local_pi=""
 if [[ -x "$PI_BIN" ]]; then
     local_pi="$PI_BIN"
-else
-    local_pi="$(command -v pi 2>/dev/null || true)"
 fi
 
 local_version=""

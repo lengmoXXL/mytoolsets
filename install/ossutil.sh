@@ -73,8 +73,6 @@ fi
 existing_ossutil=""
 if [[ -x "$OSSUTIL_BIN" ]]; then
     existing_ossutil="$OSSUTIL_BIN"
-else
-    existing_ossutil="$(command -v ossutil 2>/dev/null || true)"
 fi
 
 if [[ "${UPDATE:-}" == "1" && -z "$existing_ossutil" ]]; then

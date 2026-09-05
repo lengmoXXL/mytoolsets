@@ -11,19 +11,12 @@ UV_BIN="${BIN_DIR}/uv"
 
 mkdir -p "$BIN_DIR"
 
-if ! command -v uv &>/dev/null && [[ ! -x "$UV_BIN" ]]; then
+if [[ ! -x "$UV_BIN" ]]; then
     echo "错误: 缺少 uv，请先运行 $(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/uv.sh" >&2
     exit 1
 fi
 
-if command -v uv &>/dev/null; then
-    UV_CMD="$(command -v uv)"
-elif [[ -x "$UV_BIN" ]]; then
-    UV_CMD="$UV_BIN"
-else
-    echo "错误: uv 安装后未找到，请确认 $BIN_DIR 在 PATH 中"
-    exit 1
-fi
+UV_CMD="$UV_BIN"
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
 

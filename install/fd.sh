@@ -43,8 +43,6 @@ done
 existing_fd=""
 if [[ -x "$BIN_DIR/fd" ]]; then
     existing_fd="$BIN_DIR/fd"
-elif command -v fd &>/dev/null; then
-    existing_fd="$(command -v fd)"
 fi
 
 if [[ "${UPDATE:-}" == "1" && -z "$existing_fd" ]]; then

@@ -43,8 +43,6 @@ done
 existing_rg=""
 if [[ -x "$BIN_DIR/rg" ]]; then
     existing_rg="$BIN_DIR/rg"
-elif command -v rg &>/dev/null; then
-    existing_rg="$(command -v rg)"
 fi
 
 if [[ "${UPDATE:-}" == "1" && -z "$existing_rg" ]]; then

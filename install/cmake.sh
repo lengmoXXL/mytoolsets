@@ -44,8 +44,6 @@ done
 existing_cmake=""
 if [[ -x "$BIN_DIR/cmake" ]]; then
     existing_cmake="$BIN_DIR/cmake"
-elif command -v cmake &>/dev/null; then
-    existing_cmake="$(command -v cmake)"
 fi
 
 if [[ "${UPDATE:-}" == "1" && -z "$existing_cmake" ]]; then

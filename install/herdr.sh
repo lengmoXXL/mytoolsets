@@ -46,8 +46,6 @@ target_version="${HERDR_VERSION#v}"
 local_herdr=""
 if [[ -x "$HERDR_BIN" ]]; then
     local_herdr="$HERDR_BIN"
-else
-    local_herdr="$(command -v herdr 2>/dev/null || true)"
 fi
 
 local_version=""

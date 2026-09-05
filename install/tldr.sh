@@ -12,13 +12,13 @@ UV_BIN="${BIN_DIR}/uv"
 
 mkdir -p "$BIN_DIR"
 
-if [[ "${UPDATE:-}" == "1" ]] && ! command -v tldr &>/dev/null; then
+if [[ "${UPDATE:-}" == "1" && ! -x "$BIN_DIR/tldr" ]]; then
     echo "未安装，跳过: tldr"
     exit 0
 fi
 
-if command -v tldr &>/dev/null && [[ "${UPDATE:-}" != "1" ]]; then
-    echo "tldr 已安装: $(command -v tldr)"
+if [[ -x "$BIN_DIR/tldr" && "${UPDATE:-}" != "1" ]]; then
+    echo "tldr 已安装: $BIN_DIR/tldr"
     exit 0
 fi
 
@@ -28,19 +28,12 @@ if [[ ! -x "$PYTHON_DIR/bin/python3" ]]; then
     exit 1
 fi
 
-if ! command -v uv &>/dev/null && [[ ! -x "$UV_BIN" ]]; then
+if [[ ! -x "$UV_BIN" ]]; then
     echo "错误: 缺少 uv，请先运行 install/uv.sh" >&2
     exit 1
 fi
 
-if command -v uv &>/dev/null; then
-    UV_CMD="$(command -v uv)"
-elif [[ -x "$UV_BIN" ]]; then
-    UV_CMD="$UV_BIN"
-else
-    echo "错误: uv 安装后未找到，请确认 $BIN_DIR 在 PATH 中"
-    exit 1
-fi
+UV_CMD="$UV_BIN"
 
 if [[ "${UPDATE:-}" == "1" ]]; then
     installed_version=$("$UV_CMD" pip list --python "$PYTHON_DIR/bin/python3" 2>/dev/null | awk '$1 == "tldr" {print $2}')
@@ -63,5 +56,5 @@ ln -sf "$PYTHON_DIR/bin/tldr" "$BIN_DIR/tldr"
 
 echo ""
 echo "tldr 安装完成"
-echo "  tldr: $(command -v tldr || echo "$BIN_DIR/tldr")"
+echo "  tldr: $BIN_DIR/tldr"
 "$PYTHON_DIR/bin/tldr" --version

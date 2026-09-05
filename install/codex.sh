@@ -47,8 +47,6 @@ target_tag="rust-v${CODEX_VERSION}"
 local_codex=""
 if [[ -x "$CODEX_BIN" ]]; then
     local_codex="$CODEX_BIN"
-else
-    local_codex="$(command -v codex 2>/dev/null || true)"
 fi
 
 local_version=""
