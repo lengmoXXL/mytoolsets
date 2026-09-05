@@ -106,6 +106,7 @@ configs/
 │   │   ├── extensions/
 │   │   │   ├── bash-highlight.ts
 │   │   │   ├── flat-editor.ts
+│   │   │   ├── herdr-agent-state.ts  # herdr 状态上报集成（herdr 管理，升级时从 herdr integration install pi 重新同步）
 │   │   │   └── refine.ts
 │   │   └── themes/
 │   │       └── gray.json
