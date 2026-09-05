@@ -6,7 +6,7 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
 REPO_URL="${REPO_URL:-https://github.com/lengmoXXL/doc-research.git}"
-PINNED_COMMIT="05e8199bdb320d3189cb369bbb7c39feca7a8eff"
+PINNED_COMMIT="584d66edecd954b0b153456be8814736b0d94729"
 GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 
 usage() {
