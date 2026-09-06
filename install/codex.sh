@@ -8,7 +8,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 BIN_DIR="${HOME}/.local/bin"
 CODEX_BIN="${BIN_DIR}/codex"
 CODE_MODE_HOST_BIN="${BIN_DIR}/codex-code-mode-host"
-CODEX_VERSION="0.153.2"
+CODEX_VERSION="0.153.4"
 CURL_USER_AGENT="configs-install-codex"
 GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
