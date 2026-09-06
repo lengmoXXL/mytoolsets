@@ -6,7 +6,7 @@ set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
 
 REPO_URL="https://github.com/lengmoXXL/markdown-oxide.git"
-PINNED_COMMIT="8add9dbc17009762c22859960195af6c8d3e2bf1"  # fork HEAD，即上游 0.25.12
+PINNED_COMMIT="d99a2deb32a4de3b2026a1d65373f52ebb72930d"  # fork HEAD，即上游 0.25.12 + GitHub slug 标题链接解析
 GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 RUST_DIR="${HOME}/.local/rust"
 INSTALL_ROOT="${HOME}/.local/markdown-oxide"
