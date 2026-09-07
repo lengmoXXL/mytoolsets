@@ -12,21 +12,26 @@ SUBSCRIPTION_PAGE="https://access.fengcheyun.com/#/dashboard"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 clash-for-linux
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -56,7 +61,7 @@ if [[ "${CN:-}" == "1" ]]; then
     REPO_URL="${GITHUB_PROXY_PREFIX}${REPO_URL}"
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -d "$INSTALL_DIR/.git" ]]; then
+if [[ "$UPDATE" == "1" && ! -d "$INSTALL_DIR/.git" ]]; then
     echo "未安装，跳过: $INSTALL_DIR"
     exit 0
 fi
@@ -72,7 +77,7 @@ else
     git clone --branch "$BRANCH" --depth 1 "$REPO_URL" "$INSTALL_DIR"
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     confirm_update "clashctl（重跑官方安装流程）" || exit 0
 fi
 

@@ -10,10 +10,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_PATH="$SCRIPT_DIR/../tools/doc-research-init.sh"
 TARGET_PATH="$BIN_DIR/doc-research-init"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -25,7 +27,7 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     if [[ ! -e "$TARGET_PATH" ]]; then
         echo "未安装，跳过: $TARGET_PATH"
         exit 0

@@ -10,11 +10,15 @@ BIN_DIR="${HOME}/.local/bin"
 PYTHON_DIR="${HOME}/.local/python3.11"
 UV_BIN="${BIN_DIR}/uv"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         *)
             echo "未知参数: $1" >&2
@@ -35,12 +39,12 @@ fi
 
 mkdir -p "$BIN_DIR"
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$BIN_DIR/tldr" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$BIN_DIR/tldr" ]]; then
     echo "未安装，跳过: tldr"
     exit 0
 fi
 
-if [[ -x "$BIN_DIR/tldr" && "${UPDATE:-}" != "1" ]]; then
+if [[ -x "$BIN_DIR/tldr" && "$UPDATE" != "1" ]]; then
     echo "tldr 已安装: $BIN_DIR/tldr"
     exit 0
 fi
@@ -58,7 +62,7 @@ fi
 
 UV_CMD="$UV_BIN"
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     installed_version=$("$UV_CMD" pip list --python "$PYTHON_DIR/bin/python3" 2>/dev/null | awk '$1 == "tldr" {print $2}')
     if [[ "$installed_version" == "$TLDR_VERSION" ]]; then
         echo "tldr 已是最新: $installed_version"

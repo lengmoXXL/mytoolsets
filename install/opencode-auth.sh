@@ -11,11 +11,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AUTH_FILE="${HOME}/.local/share/opencode/auth.json"
 SECRETS_FILE="${SECRETS_DIR:-$SCRIPT_DIR/../.secrets}/ai-providers.json"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         *)
             echo "未知参数: $1" >&2
@@ -122,7 +126,7 @@ case "$merge_status" in
         ;;
 esac
 
-if [[ "${UPDATE:-}" == "1" ]] && ! confirm_update "opencode auth.json"; then
+if [[ "$UPDATE" == "1" ]] && ! confirm_update "opencode auth.json"; then
     echo "已取消"
     exit 0
 fi

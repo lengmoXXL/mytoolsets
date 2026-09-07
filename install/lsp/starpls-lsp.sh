@@ -12,21 +12,26 @@ GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 starpls
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理下载 GitHub Release 文件
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -46,14 +51,14 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"
     exit 0
 fi
 
 if [[ -x "$BINARY" ]]; then
     installed_version="v$("$BINARY" version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
-    if [[ "${UPDATE:-}" != "1" ]]; then
+    if [[ "$UPDATE" != "1" ]]; then
         echo "starpls 已安装: $BINARY ($installed_version)"
         exit 0
     fi

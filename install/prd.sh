@@ -10,10 +10,12 @@ PROJECT_DIR="${SCRIPT_DIR}/../tools/prd"
 SOURCE_PATH="${PROJECT_DIR}/dist/prd.cjs"
 TARGET_PATH="${BIN_DIR}/prd"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -40,12 +42,12 @@ if ! command -v npm >/dev/null 2>&1; then
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -e "$TARGET_PATH" ]]; then
+if [[ "$UPDATE" == "1" && ! -e "$TARGET_PATH" ]]; then
     echo "未安装，跳过: $TARGET_PATH"
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     confirm_update "prd" || exit 0
 fi
 

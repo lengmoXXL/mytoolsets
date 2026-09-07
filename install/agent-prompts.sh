@@ -9,11 +9,15 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROMPTS_DIR="${PROMPTS_DIR:-$SCRIPT_DIR/../configs/agents}"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         *)
             echo "未知参数: $1" >&2
@@ -90,7 +94,7 @@ install_mode() {
                 print
             }
         ' "$dest" > "$tmp_dest"
-    elif [[ "${UPDATE:-}" == "1" ]]; then
+    elif [[ "$UPDATE" == "1" ]]; then
         echo "未安装，跳过: $dest"
         return
     elif [[ -f "$dest" && -s "$dest" ]]; then
@@ -105,7 +109,7 @@ install_mode() {
         echo "已是最新 ($mode): $dest"
         return
     fi
-    if [[ "${UPDATE:-}" == "1" ]]; then
+    if [[ "$UPDATE" == "1" ]]; then
         confirm_update "$dest ($mode)" || return
     fi
     mv "$tmp_dest" "$dest"

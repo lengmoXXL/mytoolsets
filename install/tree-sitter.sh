@@ -8,11 +8,15 @@ BIN_DIR="${HOME}/.local/bin"
 
 VERSION="0.27.0"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         *)
             echo "未知参数: $1" >&2
@@ -42,14 +46,14 @@ fi
 
 echo "安装目录: $BIN_DIR/tree-sitter"
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$BIN_DIR/tree-sitter" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$BIN_DIR/tree-sitter" ]]; then
     echo "未安装，跳过: $BIN_DIR/tree-sitter"
     exit 0
 fi
 
 if [[ -x "$BIN_DIR/tree-sitter" ]]; then
     installed_version="$("$BIN_DIR/tree-sitter" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
-    if [[ "${UPDATE:-}" != "1" ]]; then
+    if [[ "$UPDATE" != "1" ]]; then
         echo "tree-sitter 已安装: $installed_version"
         exit 0
     fi

@@ -1,6 +1,6 @@
 #!/bin/bash
 # 安装 Node.js 到 ~/.local/node
-# 可重入：已安装时跳过；UPDATE=1 时对比固定版本按需更新
+# 可重入：已安装时跳过；--update 时对比固定版本按需更新
 
 set -e
 
@@ -12,10 +12,12 @@ NODE_VERSION="v26.8.1"
 # Node.js 20+ 需要 macOS 11+，旧系统使用 Node.js 18
 NODE_VERSION_LEGACY_MAC="v18.20.8"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -31,7 +33,7 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$INSTALL_DIR/bin/node" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$INSTALL_DIR/bin/node" ]]; then
     echo "未安装，跳过: $INSTALL_DIR/bin/node"
     exit 0
 fi
@@ -45,14 +47,14 @@ fi
 
 sync_npm_config() {
     if [[ "$("$INSTALL_DIR/bin/npm" config get registry 2>/dev/null)" != "https://registry.npmmirror.com" ]]; then
-        if [[ "${UPDATE:-}" == "1" ]] && ! confirm_update "npm registry -> npmmirror"; then
+        if [[ "$UPDATE" == "1" ]] && ! confirm_update "npm registry -> npmmirror"; then
             return
         fi
         "$INSTALL_DIR/bin/npm" config set registry https://registry.npmmirror.com
         echo "npm registry 已更新"
     fi
     if [[ "$("$INSTALL_DIR/bin/npm" config get prefix 2>/dev/null)" != "$HOME/.local" ]]; then
-        if [[ "${UPDATE:-}" == "1" ]] && ! confirm_update "npm prefix -> ~/.local"; then
+        if [[ "$UPDATE" == "1" ]] && ! confirm_update "npm prefix -> ~/.local"; then
             return
         fi
         "$INSTALL_DIR/bin/npm" config set prefix "$HOME/.local"
@@ -63,7 +65,7 @@ sync_npm_config() {
 should_install=false
 if [[ ! -x "$INSTALL_DIR/bin/node" ]]; then
     should_install=true
-elif [[ "${UPDATE:-}" != "1" ]]; then
+elif [[ "$UPDATE" != "1" ]]; then
     echo "Node.js 已安装: $($INSTALL_DIR/bin/node --version)"
 else
     installed_version="$("$INSTALL_DIR/bin/node" --version)"

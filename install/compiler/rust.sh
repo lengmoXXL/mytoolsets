@@ -1,6 +1,6 @@
 #!/bin/bash
 # 安装隔离的 Rust 环境到 ~/.local/rust
-# 可重入：已安装时跳过；UPDATE=1 时 rustup 更新到最新 stable
+# 可重入：已安装时跳过；--update 时 rustup 更新到最新 stable
 
 set -e
 
@@ -10,10 +10,12 @@ INSTALL_DIR="${HOME}/.local/rust"
 BIN_DIR="${HOME}/.local/bin"
 RUST_VERSION="1.96.0"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -37,7 +39,7 @@ export CARGO_HOME="$INSTALL_DIR"
 export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
 export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$INSTALL_DIR/bin/cargo" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$INSTALL_DIR/bin/cargo" ]]; then
     echo "未安装，跳过: $INSTALL_DIR/bin/cargo"
     exit 0
 fi
@@ -67,7 +69,7 @@ write_file_if_changed "$ENV_DIR/rust.sh" "$tmp_env"
 
 if [[ -x "$INSTALL_DIR/bin/cargo" ]]; then
     installed_version="$("$INSTALL_DIR/bin/rustc" --version | awk '{print $2}')"
-    if [[ "${UPDATE:-}" != "1" ]]; then
+    if [[ "$UPDATE" != "1" ]]; then
         echo "Rust 已安装: $installed_version"
         exit 0
     fi

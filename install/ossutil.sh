@@ -12,13 +12,14 @@ OSSUTIL_BIN="$BIN_DIR/ossutil"
 
 usage() {
     cat <<EOF
-Usage: $0 [version] [--remove]
+Usage: $0 [version] [--remove] [--update]
 
 Installs ossutil to $OSSUTIL_BIN.
 Only ossutil 2.3.0 has built-in SHA256 checksums in this script.
 
 Options:
   --remove          Uninstall ossutil
+  --update          Update installed ossutil (skip if not installed)
 
 Environment:
   OSSUTIL_VERSION   Version to install. Default: 2.3.0
@@ -26,11 +27,15 @@ Environment:
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -95,7 +100,7 @@ if [[ -x "$OSSUTIL_BIN" ]]; then
     existing_ossutil="$OSSUTIL_BIN"
 fi
 
-if [[ "${UPDATE:-}" == "1" && -z "$existing_ossutil" ]]; then
+if [[ "$UPDATE" == "1" && -z "$existing_ossutil" ]]; then
     echo "未安装，跳过: ossutil"
     exit 0
 fi

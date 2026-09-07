@@ -14,21 +14,26 @@ GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 tmux 及编译源码目录
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理下载 GitHub Release 文件
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -112,7 +117,7 @@ make_jobs() {
     fi
 }
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$TMUX_BIN" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$TMUX_BIN" ]]; then
     echo "未安装，跳过: $TMUX_BIN"
     exit 0
 fi

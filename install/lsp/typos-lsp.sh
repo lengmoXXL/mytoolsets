@@ -11,24 +11,27 @@ GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [--binary|--source] [--remove]
+用法: $0 [--binary|--source] [--remove] [--update]
 
 选项:
   --binary  从 GitHub Release 下载预编译包 (默认)
   --source  从源码编译
   --remove  卸载 typos-lsp
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理访问 GitHub
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case $1 in
         --binary) MODE="binary"; shift ;;
         --source) MODE="source"; shift ;;
         --remove) REMOVE=1; shift ;;
+        --update) UPDATE=1; shift ;;
         -h | --help) usage; exit 0 ;;
         *) usage; exit 1 ;;
     esac
@@ -48,13 +51,13 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"
     exit 0
 fi
 
 if [[ -x "$BINARY" ]]; then
-    if [[ "${UPDATE:-}" != "1" ]]; then
+    if [[ "$UPDATE" != "1" ]]; then
         echo "typos-lsp 已安装"
         exit 0
     fi

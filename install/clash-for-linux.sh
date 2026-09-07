@@ -12,21 +12,26 @@ INSTALL_DIR="${SHARE_DIR}/clash-for-linux-install"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 clash-for-linux 及 .bashrc 配置
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -54,7 +59,7 @@ fi
 
 mkdir -p "$SHARE_DIR"
 
-if [[ "${UPDATE:-}" == "1" && ! -d "$INSTALL_DIR/.git" ]]; then
+if [[ "$UPDATE" == "1" && ! -d "$INSTALL_DIR/.git" ]]; then
     echo "未安装，跳过: $INSTALL_DIR"
     exit 0
 fi
@@ -62,7 +67,7 @@ fi
 if [[ -d "$INSTALL_DIR/.git" ]]; then
     git -C "$INSTALL_DIR" remote set-url origin "$REPO_URL"
     git -C "$INSTALL_DIR" fetch --depth 1 origin "$BRANCH"
-    if [[ "${UPDATE:-}" == "1" ]]; then
+    if [[ "$UPDATE" == "1" ]]; then
         local_head="$(git -C "$INSTALL_DIR" rev-parse HEAD)"
         remote_head="$(git -C "$INSTALL_DIR" rev-parse "origin/$BRANCH")"
         if [[ "$local_head" == "$remote_head" ]]; then

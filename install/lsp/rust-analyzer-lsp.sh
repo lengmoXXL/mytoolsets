@@ -10,10 +10,12 @@ BIN_DIR="${HOME}/.local/bin"
 RUSTUP="${BIN_DIR}/rustup"
 RUST_ANALYZER="${BIN_DIR}/rust-analyzer"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -33,13 +35,13 @@ export CARGO_HOME="${RUST_DIR}"
 export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
 export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$RUST_ANALYZER" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$RUST_ANALYZER" ]]; then
     echo "未安装，跳过: $RUST_ANALYZER"
     exit 0
 fi
 
 if [[ -x "$RUST_ANALYZER" ]]; then
-    if [[ "${UPDATE:-}" == "1" ]]; then
+    if [[ "$UPDATE" == "1" ]]; then
         echo "rust-analyzer 随 rust 工具链更新（见 compiler/rust.sh），跳过"
     else
         echo "rust-analyzer 已安装: $("$RUST_ANALYZER" --version)"

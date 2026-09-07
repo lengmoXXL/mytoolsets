@@ -9,10 +9,12 @@ BIN_DIR="${HOME}/.local/bin"
 ENV_DIR="$HOME/.config/env.d"
 UV_BIN="${BIN_DIR}/uv"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -39,7 +41,7 @@ fi
 
 UV_CMD="$UV_BIN"
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$INSTALL_DIR/bin/python3" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$INSTALL_DIR/bin/python3" ]]; then
     echo "未安装，跳过: $INSTALL_DIR/bin/python3"
     exit 0
 fi

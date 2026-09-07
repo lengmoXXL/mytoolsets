@@ -12,20 +12,25 @@ THEMES_DEST="$KIMI_HOME/themes"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 安装 Kimi Code 主题到 ${KIMI_CODE_HOME:-~/.kimi-code}/themes/。
 
 选项:
   --remove  卸载 Kimi Code 主题
+  --update  更新已安装的工具（未安装则跳过）
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -50,7 +55,7 @@ if [[ ! -d "$THEMES_SOURCE" ]]; then
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -d "$THEMES_DEST" ]]; then
+if [[ "$UPDATE" == "1" && ! -d "$THEMES_DEST" ]]; then
     echo "未安装，跳过: $THEMES_DEST"
     exit 0
 fi
@@ -61,7 +66,7 @@ if ! command -v rsync &>/dev/null; then
 fi
 
 mkdir -p "$THEMES_DEST"
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     changes="$(rsync -nai --delete "$THEMES_SOURCE/" "$THEMES_DEST/")"
     if [[ -z "$changes" ]]; then
         echo "已是最新: $THEMES_DEST"

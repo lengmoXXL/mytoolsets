@@ -8,11 +8,13 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
 ZIG_DIR="${HOME}/.local/zig"
 BIN_DIR="${HOME}/.local/bin"
 
+UPDATE=0
 REMOVE=0
 ZIG_VERSION="0.15.1"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) ZIG_VERSION="$1" ;;
     esac
     shift
@@ -29,7 +31,7 @@ fi
 
 echo "安装 Zig $ZIG_VERSION"
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$ZIG_BIN" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$ZIG_BIN" ]]; then
     echo "未安装，跳过: $ZIG_BIN"
     exit 0
 fi

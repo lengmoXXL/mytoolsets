@@ -7,10 +7,12 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source_path="${script_dir}/../tools/style-check.sh"
 target_path="${bin_dir}/style-check"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -22,7 +24,7 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     if [[ ! -e "${target_path}" ]]; then
         echo "未安装，跳过: ${target_path}"
         exit 0

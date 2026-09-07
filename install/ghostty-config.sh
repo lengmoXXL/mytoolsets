@@ -12,20 +12,25 @@ GHOSTTY_DEST="$GHOSTTY_DIR/config"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 安装 Ghostty 配置到 ~/.config/ghostty/config。
 
 选项:
   --remove  卸载 Ghostty 配置
+  --update  更新已安装的工具（未安装则跳过）
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -50,7 +55,7 @@ if [[ ! -f "$GHOSTTY_SOURCE" ]]; then
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -e "$GHOSTTY_DEST" ]]; then
+if [[ "$UPDATE" == "1" && ! -e "$GHOSTTY_DEST" ]]; then
     echo "未安装，跳过: $GHOSTTY_DEST"
     exit 0
 fi

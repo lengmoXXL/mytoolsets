@@ -11,10 +11,12 @@ NPM="${BIN_DIR}/npm"
 PYRIGHT="${BIN_DIR}/pyright"
 PYRIGHT_LANGSERVER="${BIN_DIR}/pyright-langserver"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -28,14 +30,14 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$PYRIGHT_LANGSERVER" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$PYRIGHT_LANGSERVER" ]]; then
     echo "未安装，跳过: $PYRIGHT_LANGSERVER"
     exit 0
 fi
 
 VERSION="1.1.413"
 
-if [[ -x "$PYRIGHT_LANGSERVER" && "${UPDATE:-}" != "1" ]]; then
+if [[ -x "$PYRIGHT_LANGSERVER" && "$UPDATE" != "1" ]]; then
     echo "pyright-langserver 已安装"
     exit 0
 fi
@@ -50,7 +52,7 @@ if [[ ! -x "$NPM" ]]; then
     fi
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     installed_version="$("$PYRIGHT" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
     if [[ "$installed_version" == "$VERSION" ]]; then
         echo "pyright 已是最新: $installed_version"

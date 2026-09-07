@@ -9,11 +9,15 @@ set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         *)
             echo "未知参数: $1" >&2
@@ -41,7 +45,7 @@ if ! command -v tic &>/dev/null; then
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     echo "未安装，跳过: xterm-ghostty terminfo"
     exit 0
 fi

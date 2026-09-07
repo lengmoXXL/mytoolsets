@@ -13,11 +13,15 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 KIMI_VERSION="0.41.0"
 KIMI_BIN="$HOME/.kimi-code/bin/kimi"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         *)
             echo "未知参数: $1" >&2
@@ -34,14 +38,14 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$KIMI_BIN" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$KIMI_BIN" ]]; then
     echo "未安装，跳过: kimi"
     exit 0
 fi
 
 if [[ -x "$KIMI_BIN" ]]; then
     installed_version="$("$KIMI_BIN" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
-    if [[ "${UPDATE:-}" != "1" ]]; then
+    if [[ "$UPDATE" != "1" ]]; then
         echo "kimi 已安装: $installed_version"
         exit 0
     fi

@@ -12,21 +12,26 @@ PUBLIC_BASE_URL="${PERF_TO_PROFILE_BASE_URL:-https://lengmo-asserts.oss-cn-beiji
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 perf_to_profile
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   PERF_TO_PROFILE_BASE_URL  预编译文件下载目录
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -47,7 +52,7 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"
     exit 0
 fi
@@ -63,7 +68,7 @@ if [[ "$(uname -s)" != "Linux" ]]; then
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && -x "$BINARY" ]]; then
+if [[ "$UPDATE" == "1" && -x "$BINARY" ]]; then
     confirm_update "perf_to_profile: $(<"$VERSION_FILE" 2>/dev/null || echo unknown) -> ${SOURCE_COMMIT:0:12}" || exit 0
 fi
 

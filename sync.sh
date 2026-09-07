@@ -1,11 +1,10 @@
 #!/bin/bash
 # 遍历 install/ 下所有安装脚本，更新已安装的工具与配置
-# 每个脚本在 UPDATE=1 下：未安装则跳过；已安装则对比版本/内容，按需更新
+# 每个脚本 --update 下：未安装则跳过；已安装则对比版本/内容，按需更新
 
 set -e
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export UPDATE=1
 
 # sync 自身忽略 SIGINT，Ctrl+C 只杀当前子脚本（子 shell 里恢复默认处理）
 trap '' INT
@@ -23,7 +22,7 @@ for script in "$ROOT"/install/*.sh "$ROOT"/install/compiler/*.sh \
         echo "跳过（sync: skip）"
         continue
     fi
-    if ! run_script "$script"; then
+    if ! run_script "$script" --update; then
         failed+=("${script#"$ROOT"/}")
     fi
 done
@@ -35,7 +34,7 @@ for script in "$ROOT"/install/*.py; do
         echo "跳过（sync: skip）"
         continue
     fi
-    if ! run_script python3 "$script"; then
+    if ! run_script python3 "$script" --update; then
         failed+=("${script#"$ROOT"/}")
     fi
 done

@@ -15,17 +15,19 @@ NPM_REGISTRY=""
 
 usage() {
     cat << EOF
-用法: $0 [--registry URL] [--remove]
+用法: $0 [--registry URL] [--remove] [--update]
 
 选项:
   --registry URL  使用指定 npm registry
   --remove        卸载 Pi Agent
+  --update        更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     使用 npmmirror npm registry
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -39,6 +41,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -106,7 +111,7 @@ if [[ -n "$local_pi" ]]; then
     local_version=$("$local_pi" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 fi
 
-if [[ "${UPDATE:-}" == "1" && -z "$local_pi" ]]; then
+if [[ "$UPDATE" == "1" && -z "$local_pi" ]]; then
     echo "未安装，跳过: pi"
     exit 0
 fi

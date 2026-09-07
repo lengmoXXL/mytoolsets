@@ -9,11 +9,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE="$SCRIPT_DIR/../configs/pi"
 TARGET="$HOME/.pi/agent"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         *)
             echo "未知参数: $1" >&2
@@ -43,7 +47,7 @@ if ! command -v rsync &>/dev/null; then
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -d "$TARGET" ]]; then
+if [[ "$UPDATE" == "1" && ! -d "$TARGET" ]]; then
     echo "未安装，跳过: $TARGET"
     exit 0
 fi
@@ -63,7 +67,7 @@ sync_dir() {
         echo "$dest 未变化"
         return
     fi
-    if [[ "${UPDATE:-}" == "1" ]] && ! confirm_update "$desc"; then
+    if [[ "$UPDATE" == "1" ]] && ! confirm_update "$desc"; then
         return
     fi
     mkdir -p "$dest"
@@ -79,7 +83,7 @@ sync_dir "$SOURCE/agents" "$TARGET/agents" "pi agents"
 ext_changes="$(rsync -nai --delete --include='*.ts' --exclude='*' "$SOURCE/extensions/" "$TARGET/extensions/")"
 if [[ -n "$ext_changes" ]]; then
     echo "$ext_changes"
-    if [[ "${UPDATE:-}" != "1" ]] || confirm_update "pi extensions"; then
+    if [[ "$UPDATE" != "1" ]] || confirm_update "pi extensions"; then
         rsync -ai --delete --include='*.ts' --exclude='*' "$SOURCE/extensions/" "$TARGET/extensions/"
         echo "pi extensions 已更新: $TARGET/extensions"
     fi

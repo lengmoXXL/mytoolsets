@@ -6,10 +6,12 @@ BIN_DIR="$HOME/.local/bin"
 NPM="$BIN_DIR/npm"
 BINARY="$BIN_DIR/bash-language-server"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
@@ -31,19 +33,19 @@ if [[ ! -x "$NPM" ]]; then
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"
     exit 0
 fi
 
 VERSION="5.6.0"
 
-if [[ -x "$BINARY" && "${UPDATE:-}" != "1" ]]; then
+if [[ -x "$BINARY" && "$UPDATE" != "1" ]]; then
     echo "bash-language-server 已安装"
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     installed_version="$("$BINARY" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
     if [[ "$installed_version" == "$VERSION" ]]; then
         echo "bash-language-server 已是最新: $installed_version"

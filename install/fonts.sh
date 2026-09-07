@@ -62,20 +62,26 @@ download_font() {
 }
 
 usage() {
-    echo "用法: $0 [--remove] [字体名...]"
+    echo "用法: $0 [--update] [--remove] [字体名...]"
     echo ""
     list_fonts
     echo ""
     echo "不带参数则安装全部字体"
-    echo "  --remove  卸载字体（带字体名则只卸载指定字体）"
+    echo "  --update  更新已安装的工具（未安装则跳过）
+  --remove  卸载字体（带字体名则只卸载指定字体）"
 }
 
 FONT_NAMES=()
+
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -106,7 +112,7 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     echo "跳过字体更新（未固定版本）"
     exit 0
 fi

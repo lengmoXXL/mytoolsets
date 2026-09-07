@@ -11,10 +11,11 @@ GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [本地仓库路径] [--remove]
+用法: $0 [本地仓库路径] [--remove] [--update]
 
 选项:
   --remove  卸载 doc-research CLI
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理访问 GitHub
@@ -23,11 +24,15 @@ usage() {
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -72,7 +77,7 @@ if [[ "${CN:-}" == "1" && "$REPO_URL" == https://github.com/* ]]; then
     REPO_URL="${GITHUB_PROXY_PREFIX}${REPO_URL}"
 fi
 
-if [[ "${UPDATE:-}" == "1" ]] && ! uv tool list 2>/dev/null | grep -q "^doc-research "; then
+if [[ "$UPDATE" == "1" ]] && ! uv tool list 2>/dev/null | grep -q "^doc-research "; then
     echo "未安装，跳过: doc-research"
     exit 0
 fi
@@ -83,7 +88,7 @@ if uv tool list 2>/dev/null | grep -q "^doc-research " \
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     confirm_update "doc-research 到固定版本 ${PINNED_COMMIT:0:12}" || exit 0
 fi
 

@@ -14,21 +14,26 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 neovim-skill
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -42,7 +47,7 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [[ "${UPDATE:-}" == "1" && ! -d "$DEST" ]]; then
+if [[ "$UPDATE" == "1" && ! -d "$DEST" ]]; then
     echo "未安装，跳过: $DEST"
     exit 0
 fi
@@ -57,7 +62,7 @@ if [[ "$REMOVE" == "1" ]]; then
   exit 0
 fi
 
-if [[ -d "$DEST" && "${UPDATE:-}" != "1" ]]; then
+if [[ -d "$DEST" && "$UPDATE" != "1" ]]; then
     echo "neovim-skill 已安装: $DEST"
     exit 0
 fi
@@ -71,7 +76,7 @@ if [[ -d "$DEST" && "$(cat "$MARKER" 2>/dev/null)" == "$PINNED_COMMIT" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     confirm_update "neovim-skill -> ${PINNED_COMMIT:0:12}" || exit 0
 fi
 

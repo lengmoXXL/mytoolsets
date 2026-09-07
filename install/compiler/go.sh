@@ -1,6 +1,6 @@
 #!/bin/bash
 # 安装 Go 到 ~/.local/go
-# 可重入：已安装时跳过；UPDATE=1 时对比固定版本按需更新
+# 可重入：已安装时跳过；--update 时对比固定版本按需更新
 
 set -e
 
@@ -11,16 +11,18 @@ BIN_DIR="${HOME}/.local/bin"
 GO_VERSION="1.27.1"
 GOPLS_VERSION="v0.23.0"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove) REMOVE=1 ;;
+        --update) UPDATE=1 ;;
         *) echo "未知参数: $1" >&2; exit 1 ;;
     esac
     shift
 done
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$INSTALL_DIR/bin/go" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$INSTALL_DIR/bin/go" ]]; then
     echo "未安装，跳过: $INSTALL_DIR/bin/go"
     exit 0
 fi
@@ -49,7 +51,7 @@ write_file_if_changed "$ENV_DIR/go.sh" "$tmp_env"
 should_install=false
 if [[ ! -x "$INSTALL_DIR/bin/go" ]]; then
     should_install=true
-elif [[ "${UPDATE:-}" != "1" ]]; then
+elif [[ "$UPDATE" != "1" ]]; then
     echo "Go 已安装: $($INSTALL_DIR/bin/go version)"
 else
     installed_version="$("$INSTALL_DIR/bin/go" version | awk '{print $3}' | sed 's/go//')"
@@ -102,7 +104,7 @@ if [[ -x "$BIN_DIR/gopls" ]]; then
         echo "gopls 已是最新: $installed_gopls"
         exit 0
     fi
-    if [[ "${UPDATE:-}" == "1" ]]; then
+    if [[ "$UPDATE" == "1" ]]; then
         confirm_update "gopls: ${installed_gopls:-unknown} -> $GOPLS_VERSION" || exit 0
     fi
 fi

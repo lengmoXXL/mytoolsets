@@ -11,7 +11,7 @@ confirm_update() {
 # write_managed_block <file> <name> <content_file> [insert_before_pattern]
 # 用 # BEGIN configs <name> / # END configs <name> 守卫管理 file 中的一段文本：
 # 已有 block 则整体替换；否则可选插到匹配行之前，或追加到文件末尾；
-# 内容一致跳过，UPDATE=1 下不一致先确认
+# 内容一致跳过，--update 下不一致先确认
 write_managed_block() {
     local file="$1"
     local name="$2"
@@ -87,7 +87,7 @@ write_managed_block() {
         echo "$file ($name) 未变化"
         return
     fi
-    if [[ "${UPDATE:-}" == "1" ]] && ! confirm_update "$file ($name)"; then
+    if [[ "$UPDATE" == "1" ]] && ! confirm_update "$file ($name)"; then
         rm -f "$tmp_file"
         return
     fi
@@ -109,7 +109,7 @@ strip_block() {
 
 
 # write_file_if_changed <dest> <content_file>: 内容一致跳过；
-# UPDATE=1 下不一致先确认；不一致时覆盖 dest（dest 父目录自动创建）
+# --update 下不一致先确认；不一致时覆盖 dest（dest 父目录自动创建）
 write_file_if_changed() {
     local file="$1"
     local content_file="$2"
@@ -118,7 +118,7 @@ write_file_if_changed() {
         echo "$file 未变化"
         return
     fi
-    if [[ "${UPDATE:-}" == "1" ]] && ! confirm_update "$file"; then
+    if [[ "$UPDATE" == "1" ]] && ! confirm_update "$file"; then
         rm -f "$content_file"
         return
     fi

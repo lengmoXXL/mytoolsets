@@ -14,21 +14,26 @@ GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 tmux 配置与 TPM
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -58,7 +63,7 @@ if [[ ! -f "$TMUX_SOURCE" ]]; then
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -d "$TPM_DIR" && ! -f "$TMUX_DEST" ]]; then
+if [[ "$UPDATE" == "1" && ! -d "$TPM_DIR" && ! -f "$TMUX_DEST" ]]; then
     echo "未安装，跳过: $TMUX_DEST"
     exit 0
 fi
@@ -69,14 +74,14 @@ if ! command -v git &>/dev/null; then
 fi
 
 if [[ -d "$TPM_DIR/.git" ]]; then
-    if [[ "${UPDATE:-}" == "1" ]] && ! confirm_update "TPM 到最新"; then
+    if [[ "$UPDATE" == "1" ]] && ! confirm_update "TPM 到最新"; then
         echo "跳过 TPM 更新"
     else
         echo "更新 TPM: $TPM_DIR"
         git -C "$TPM_DIR" remote set-url origin "$TPM_REPO"
         git -C "$TPM_DIR" pull --ff-only
     fi
-elif [[ "${UPDATE:-}" == "1" ]]; then
+elif [[ "$UPDATE" == "1" ]]; then
     echo "TPM 未安装，跳过"
 elif [[ ! -e "$TPM_DIR" ]]; then
     echo "安装 TPM: $TPM_DIR"
@@ -86,7 +91,7 @@ else
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -e "$TMUX_DEST" ]]; then
+if [[ "$UPDATE" == "1" && ! -e "$TMUX_DEST" ]]; then
     echo "未安装，跳过: $TMUX_DEST"
     exit 0
 fi

@@ -5,7 +5,7 @@
 合并语义：只补充目标缺失的 provider 条目，不覆盖已有条目——auth.json 里的
 token/刷新状态由 pi 运行时维护，覆盖会丢掉已登录状态。需要更新时手动执行：
 
-    python3 install/pi-auth.py
+    python3 install/pi-auth.py --update
 
 卸载（删除本脚本管理的 key，保留其余条目）：
 
@@ -17,7 +17,7 @@ import os
 import sys
 from pathlib import Path
 
-UPDATE = os.environ.get("UPDATE") == "1"
+UPDATE = "--update" in sys.argv
 
 
 def remove() -> int:

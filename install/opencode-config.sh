@@ -8,11 +8,15 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
 CONFIG_FILE="${HOME}/.config/opencode/opencode.json"
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         *)
             echo "未知参数: $1" >&2
@@ -28,7 +32,7 @@ if [[ "$REMOVE" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -d "$(dirname "$CONFIG_FILE")" ]]; then
+if [[ "$UPDATE" == "1" && ! -d "$(dirname "$CONFIG_FILE")" ]]; then
     echo "未安装，跳过: $CONFIG_FILE"
     exit 0
 fi

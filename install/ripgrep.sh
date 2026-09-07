@@ -10,21 +10,26 @@ GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 ripgrep
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理下载 GitHub Release 文件
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -58,14 +63,14 @@ if [[ -x "$BIN_DIR/rg" ]]; then
     existing_rg="$BIN_DIR/rg"
 fi
 
-if [[ "${UPDATE:-}" == "1" && -z "$existing_rg" ]]; then
+if [[ "$UPDATE" == "1" && -z "$existing_rg" ]]; then
     echo "未安装，跳过: rg"
     exit 0
 fi
 
 if [[ -n "$existing_rg" ]]; then
     installed_version="$("$existing_rg" --version | head -1 | awk '{print $2}')"
-    if [[ "${UPDATE:-}" != "1" ]]; then
+    if [[ "$UPDATE" != "1" ]]; then
         echo "rg 已安装: $existing_rg ($installed_version)"
         exit 0
     fi

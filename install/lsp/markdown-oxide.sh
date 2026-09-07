@@ -16,21 +16,26 @@ BINARY="${BIN_DIR}/markdown-oxide"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 markdown-oxide
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -73,12 +78,12 @@ else
     exit 1
 fi
 
-if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
+if [[ "$UPDATE" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"
     exit 0
 fi
 
-if [[ -x "$BINARY" && "${UPDATE:-}" != "1" ]]; then
+if [[ -x "$BINARY" && "$UPDATE" != "1" ]]; then
     echo "markdown-oxide 已安装: $("$BINARY" --version)"
     exit 0
 fi
@@ -88,7 +93,7 @@ if [[ -x "$BINARY" && "$(cat "$MARKER" 2>/dev/null)" == "$PINNED_COMMIT" ]]; the
     exit 0
 fi
 
-if [[ "${UPDATE:-}" == "1" ]]; then
+if [[ "$UPDATE" == "1" ]]; then
     confirm_update "markdown-oxide -> $VERSION" || exit 0
 fi
 

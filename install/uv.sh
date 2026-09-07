@@ -11,21 +11,26 @@ GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [--remove]
+用法: $0 [--remove] [--update]
 
 选项:
   --remove  卸载 uv
+  --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
   CN=1     通过国内代理下载 GitHub Release 文件
 EOF
 }
 
+UPDATE=0
 REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --remove)
             REMOVE=1
+            ;;
+        --update)
+            UPDATE=1
             ;;
         -h | --help)
             usage
@@ -53,14 +58,14 @@ if [[ -x "$UV_BIN" ]]; then
     uv_cmd="$UV_BIN"
 fi
 
-if [[ "${UPDATE:-}" == "1" && -z "$uv_cmd" ]]; then
+if [[ "$UPDATE" == "1" && -z "$uv_cmd" ]]; then
     echo "未安装，跳过: uv"
     exit 0
 fi
 
 if [[ -n "$uv_cmd" ]]; then
     installed_version="$("$uv_cmd" --version | awk '{print $2}')"
-    if [[ "${UPDATE:-}" != "1" ]]; then
+    if [[ "$UPDATE" != "1" ]]; then
         echo "uv 已安装: $("$uv_cmd" --version)"
         exit 0
     fi
