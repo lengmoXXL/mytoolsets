@@ -154,6 +154,7 @@ configs/
 - **固定版本**：版本/commit/tag 写成脚本常量，不查最新版；无版本输出的写入 `~/.local/share/configs-setup/versions/` 比对
 - **CN=1**：走国内代理/镜像，读取处直接 `[[ "${CN:-}" == "1" ]]`，不加 `-cn` 参数
 - **UPDATE=1**：未安装则跳过；已安装且不一致时先 `confirm_update` 再执行
+- **--remove**：卸载该脚本安装的文件/目录/托管块，先 `confirm_remove` 再执行；删除用 `remove_file` / `remove_dir` / `remove_managed_block`（`tools/common.sh`）
 - **文本修改**：文件内片段用 `write_managed_block`，整文件用 `write_file_if_changed`，目录用 `rsync -ai --delete`（先 dry-run 列差异再确认）；函数在 `tools/common.sh`，脚本开头 `source`
 - **sync 豁免**：构建型/交互型脚本在头部加 `# sync: skip`
 - **bash 3.2**（macOS 自带）：`$VAR` 后紧贴多字节字符写 `${VAR}`；`set -u` 下空数组展开前用 `${#arr[@]}` 守卫

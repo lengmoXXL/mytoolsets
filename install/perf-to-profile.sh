@@ -12,24 +12,40 @@ PUBLIC_BASE_URL="${PERF_TO_PROFILE_BASE_URL:-https://lengmo-asserts.oss-cn-beiji
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
+
+选项:
+  --remove  卸载 perf_to_profile
 
 环境变量:
   PERF_TO_PROFILE_BASE_URL  预编译文件下载目录
 EOF
 }
 
-case "${1:-}" in
-    "") ;;
-    -h | --help)
-        usage
-        exit 0
-        ;;
-    *)
-        usage
-        exit 1
-        ;;
-esac
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "perf_to_profile" || exit 0
+    remove_file "$BINARY"
+    remove_dir "$HOME/.local/share/perf_to_profile"
+    exit 0
+fi
 
 if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"

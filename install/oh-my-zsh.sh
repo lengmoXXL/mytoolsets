@@ -9,15 +9,22 @@ GITHUB_PROXY="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
+
+选项:
+  --remove  卸载 Oh My Zsh 及 .zshrc 配置
 
 环境变量:
   CN=1     通过国内代理下载 GitHub 文件与克隆仓库
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -29,6 +36,13 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Oh My Zsh" || exit 0
+    remove_dir "$HOME/.oh-my-zsh"
+    remove_managed_block "$HOME/.zshrc" zshrc
+    exit 0
+fi
 
 proxy_url() {
     if [[ "${CN:-}" == "1" ]]; then

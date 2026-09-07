@@ -3,6 +3,7 @@
 # 可重入：重复执行覆盖同名文件
 
 set -e
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FONTS_DIR="$SCRIPT_DIR/../fonts"
@@ -61,16 +62,21 @@ download_font() {
 }
 
 usage() {
-    echo "用法: $0 [字体名...]"
+    echo "用法: $0 [--remove] [字体名...]"
     echo ""
     list_fonts
     echo ""
     echo "不带参数则安装全部字体"
+    echo "  --remove  卸载字体（带字体名则只卸载指定字体）"
 }
 
 FONT_NAMES=()
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -81,6 +87,24 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    if [[ ${#FONT_NAMES[@]} -eq 0 ]]; then
+        FONT_NAMES=(dejavu aurulent droid yunhei)
+    fi
+    for name in "${FONT_NAMES[@]}"; do
+        if ! font_files "$name" >/dev/null; then
+            echo "错误: 未知字体 '$name'"
+            list_fonts
+            exit 1
+        fi
+    done
+    confirm_remove "字体: ${FONT_NAMES[*]}" || exit 0
+    for name in "${FONT_NAMES[@]}"; do
+        remove_dir "$FONTS_DIR/$name"
+    done
+    exit 0
+fi
 
 if [[ "${UPDATE:-}" == "1" ]]; then
     echo "跳过字体更新（未固定版本）"

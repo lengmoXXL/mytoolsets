@@ -9,6 +9,35 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE="$SCRIPT_DIR/../configs/pi"
 TARGET="$HOME/.pi/agent"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Pi 配置与自研 extensions" || exit 0
+    for name in models.json settings.json pi-plan-mode.json zentui.json; do
+        remove_file "$TARGET/$name"
+    done
+    remove_dir "$TARGET/themes"
+    remove_dir "$TARGET/agents"
+    # 只删镜像安装的自研 *.ts，不动目录里 pi 包管理的其他文件
+    for ext in "$SOURCE/extensions/"*.ts; do
+        [[ -e "$ext" ]] || continue
+        remove_file "$TARGET/extensions/$(basename "$ext")"
+    done
+    exit 0
+fi
+
 if ! command -v rsync &>/dev/null; then
     echo "错误: 缺少依赖 rsync" >&2
     exit 1

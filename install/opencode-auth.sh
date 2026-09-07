@@ -11,10 +11,60 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AUTH_FILE="${HOME}/.local/share/opencode/auth.json"
 SECRETS_FILE="${SECRETS_DIR:-$SCRIPT_DIR/../.secrets}/ai-providers.json"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
 if ! command -v python3 &>/dev/null; then
     echo "错误: 缺少依赖 python3"
     exit 1
 fi
+
+if [[ "$REMOVE" == "1" ]]; then
+    if [[ ! -f "$AUTH_FILE" ]]; then
+        echo "未安装: $AUTH_FILE"
+        exit 0
+    fi
+    confirm_remove "opencode auth.json 中本脚本管理的 provider 条目" || exit 0
+    python3 - "$AUTH_FILE" <<'EOF'
+import json
+import os
+import sys
+
+auth_path = sys.argv[1]
+# 与安装逻辑一致的 provider 条目（ai-providers.json key -> opencode provider id）
+providers = {"zai": "zai-coding-plan", "deepseek": "deepseek", "kimi": "kimi-for-coding"}
+
+with open(auth_path, encoding="utf-8") as fh:
+    auth = json.load(fh)
+
+found = [provider_id for provider_id in providers.values() if provider_id in auth]
+if not found:
+    print(f"未安装: {auth_path} 中没有本脚本管理的 provider 条目")
+    sys.exit(0)
+
+for provider_id in found:
+    del auth[provider_id]
+
+with open(auth_path, "w", encoding="utf-8") as fh:
+    json.dump(auth, fh, ensure_ascii=False, indent=2)
+    fh.write("\n")
+os.chmod(auth_path, 0o600)
+print(f"已删除: {', '.join(found)}")
+EOF
+    exit 0
+fi
+
 if [[ ! -f "$SECRETS_FILE" ]]; then
     echo "错误: 缺少 ${SECRETS_FILE}，请先运行 tools/secrets.sh init 或 pull" >&2
     exit 1

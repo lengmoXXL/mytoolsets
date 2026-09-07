@@ -9,6 +9,33 @@ LOCAL_BIN="$HOME/.local/bin"
 
 export PATH="$LOCAL_BIN:$PATH"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "playwright" || exit 0
+    if [[ -x "$LOCAL_BIN/playwright" ]]; then
+        "$LOCAL_BIN/playwright" uninstall || true
+    fi
+    if command -v npm &>/dev/null; then
+        npm uninstall -g playwright
+    fi
+    remove_dir "$HOME/.cache/ms-playwright"
+    echo "提示: 系统依赖包（dnf/yum 安装的库）未清理，请按需手动卸载"
+    exit 0
+fi
+
 run_with_sudo() {
     if [[ "$(id -u)" -eq 0 ]]; then
         "$@"

@@ -14,15 +14,22 @@ GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
+
+选项:
+  --remove  卸载 tmux 及编译源码目录
 
 环境变量:
   CN=1     通过国内代理下载 GitHub Release 文件
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -34,6 +41,14 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "tmux" || exit 0
+    remove_file "$TMUX_BIN"
+    remove_file "$INSTALL_DIR/share/man/man1/tmux.1"
+    remove_dir "$SRC_ROOT/tmux-$VERSION"
+    exit 0
+fi
 
 run_with_sudo() {
     if [[ "$(id -u)" -eq 0 ]]; then

@@ -7,6 +7,30 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
+
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "xterm-ghostty terminfo" || exit 0
+    find "$HOME/.terminfo" -name 'xterm-ghostty' -type f 2>/dev/null | while IFS= read -r entry; do
+        remove_file "$entry"
+    done
+    exit 0
+fi
+
 if infocmp xterm-ghostty &>/dev/null; then
     echo "xterm-ghostty terminfo 已存在，无需安装"
     exit 0

@@ -13,6 +13,27 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 KIMI_VERSION="0.41.0"
 KIMI_BIN="$HOME/.kimi-code/bin/kimi"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "kimi" || exit 0
+    remove_dir "$HOME/.kimi-code"
+    echo "提示: 官方安装器写入 shell rc 的 PATH 配置未清理，请手动检查 ~/.bashrc、~/.zshrc 等"
+    exit 0
+fi
+
 if [[ "${UPDATE:-}" == "1" && ! -x "$KIMI_BIN" ]]; then
     echo "未安装，跳过: kimi"
     exit 0

@@ -7,16 +7,18 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
 INSTALL_DIR="${HOME}/.local/ossutil"
 BIN_DIR="${HOME}/.local/bin"
-OSSUTIL_VERSION="${OSSUTIL_VERSION:-${1:-2.3.0}}"
 OSSUTIL_BASE_URL="${OSSUTIL_BASE_URL:-https://gosspublic.alicdn.com/ossutil/v2}"
 OSSUTIL_BIN="$BIN_DIR/ossutil"
 
 usage() {
     cat <<EOF
-Usage: $0 [version]
+Usage: $0 [version] [--remove]
 
 Installs ossutil to $OSSUTIL_BIN.
 Only ossutil 2.3.0 has built-in SHA256 checksums in this script.
+
+Options:
+  --remove          Uninstall ossutil
 
 Environment:
   OSSUTIL_VERSION   Version to install. Default: 2.3.0
@@ -24,12 +26,30 @@ Environment:
 EOF
 }
 
-case "${1:-}" in
-    -h | --help)
-        usage
-        exit 0
-        ;;
-esac
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            OSSUTIL_VERSION="${OSSUTIL_VERSION:-$1}"
+            ;;
+    esac
+    shift
+done
+OSSUTIL_VERSION="${OSSUTIL_VERSION:-2.3.0}"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "ossutil" || exit 0
+    remove_dir "$INSTALL_DIR"
+    remove_file "$OSSUTIL_BIN"
+    exit 0
+fi
 
 for dep in curl unzip find install uname mktemp awk sed head; do
     if ! command -v "$dep" &>/dev/null; then

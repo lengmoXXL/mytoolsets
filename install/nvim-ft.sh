@@ -8,6 +8,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_PATH="${SCRIPT_DIR}/../tools/nvim_ft.py"
 TARGET_PATH="${BIN_DIR}/nvim-ft"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "nvim-ft" || exit 0
+    remove_file "$TARGET_PATH"
+    exit 0
+fi
+
 if [[ ! -f "${SOURCE_PATH}" ]]; then
     echo "Error: Source script not found: ${SOURCE_PATH}" >&2
     exit 1

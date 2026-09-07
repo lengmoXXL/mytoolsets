@@ -11,7 +11,10 @@ GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [本地仓库路径]
+用法: $0 [本地仓库路径] [--remove]
+
+选项:
+  --remove  卸载 doc-research CLI
 
 环境变量:
   CN=1     通过国内代理访问 GitHub
@@ -20,8 +23,12 @@ usage() {
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -38,6 +45,18 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
+MARKER="$VERSIONS_DIR/doc-research"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "doc-research" || exit 0
+    if command -v uv &>/dev/null; then
+        uv tool uninstall doc-research || true
+    fi
+    remove_file "$MARKER"
+    exit 0
+fi
+
 if ! command -v uv &>/dev/null; then
     echo "错误: 缺少 uv，请先运行 $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/uv.sh" >&2
     exit 1
@@ -52,9 +71,6 @@ fi
 if [[ "${CN:-}" == "1" && "$REPO_URL" == https://github.com/* ]]; then
     REPO_URL="${GITHUB_PROXY_PREFIX}${REPO_URL}"
 fi
-
-VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
-MARKER="$VERSIONS_DIR/doc-research"
 
 if [[ "${UPDATE:-}" == "1" ]] && ! uv tool list 2>/dev/null | grep -q "^doc-research "; then
     echo "未安装，跳过: doc-research"

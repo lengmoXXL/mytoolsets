@@ -12,6 +12,25 @@ NODE_VERSION="v26.8.1"
 # Node.js 20+ 需要 macOS 11+，旧系统使用 Node.js 18
 NODE_VERSION_LEGACY_MAC="v18.20.8"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Node.js" || exit 0
+    remove_dir "$INSTALL_DIR"
+    remove_file "$BIN_DIR/node"
+    remove_file "$BIN_DIR/npm"
+    remove_file "$BIN_DIR/npx"
+    echo "提示: ~/.npmrc 中的 registry/prefix 配置未清理，请手动处理"
+    exit 0
+fi
+
 if [[ "${UPDATE:-}" == "1" && ! -x "$INSTALL_DIR/bin/node" ]]; then
     echo "未安装，跳过: $INSTALL_DIR/bin/node"
     exit 0

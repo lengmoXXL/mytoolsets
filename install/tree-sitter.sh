@@ -6,9 +6,41 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
 BIN_DIR="${HOME}/.local/bin"
 
-echo "安装目录: $BIN_DIR/tree-sitter"
-
 VERSION="0.27.0"
+
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "tree-sitter" || exit 0
+    RUST_DIR="${HOME}/.local/rust"
+    CARGO=""
+    if [[ -x "$RUST_DIR/bin/cargo" ]]; then
+        export RUSTUP_HOME="$RUST_DIR/rustup"
+        export CARGO_HOME="$RUST_DIR"
+        CARGO="$RUST_DIR/bin/cargo"
+    elif command -v cargo &>/dev/null; then
+        CARGO="$(command -v cargo)"
+    fi
+    if [[ -n "$CARGO" ]]; then
+        "$CARGO" uninstall tree-sitter-cli || true
+    fi
+    remove_file "$BIN_DIR/tree-sitter"
+    exit 0
+fi
+
+echo "安装目录: $BIN_DIR/tree-sitter"
 
 if [[ "${UPDATE:-}" == "1" && ! -x "$BIN_DIR/tree-sitter" ]]; then
     echo "未安装，跳过: $BIN_DIR/tree-sitter"

@@ -11,6 +11,23 @@ NPM="${BIN_DIR}/npm"
 PYRIGHT="${BIN_DIR}/pyright"
 PYRIGHT_LANGSERVER="${BIN_DIR}/pyright-langserver"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "pyright LSP" || exit 0
+    remove_dir "$INSTALL_DIR"
+    remove_file "$PYRIGHT"
+    remove_file "$PYRIGHT_LANGSERVER"
+    exit 0
+fi
+
 if [[ "${UPDATE:-}" == "1" && ! -x "$PYRIGHT_LANGSERVER" ]]; then
     echo "未安装，跳过: $PYRIGHT_LANGSERVER"
     exit 0

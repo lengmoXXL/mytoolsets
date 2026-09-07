@@ -12,15 +12,22 @@ INSTALL_DIR="${SHARE_DIR}/clash-for-linux-install"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
+
+选项:
+  --remove  卸载 clash-for-linux 及 .bashrc 配置
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -32,6 +39,14 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "clash-for-linux" || exit 0
+    remove_dir "$INSTALL_DIR"
+    remove_managed_block "$HOME/.bashrc" noclobber-off
+    echo "提示: 官方 install.sh 做的系统级改动（/opt、systemd 等）未清理，请按需手动处理"
+    exit 0
+fi
 
 if [[ "${CN:-}" == "1" ]]; then
     REPO_URL="${GITHUB_PROXY_PREFIX}${REPO_URL}"

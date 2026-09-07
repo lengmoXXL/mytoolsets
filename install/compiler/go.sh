@@ -11,12 +11,33 @@ BIN_DIR="${HOME}/.local/bin"
 GO_VERSION="1.27.1"
 GOPLS_VERSION="v0.23.0"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
 if [[ "${UPDATE:-}" == "1" && ! -x "$INSTALL_DIR/bin/go" ]]; then
     echo "未安装，跳过: $INSTALL_DIR/bin/go"
     exit 0
 fi
 
 ENV_DIR="$HOME/.config/env.d"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Go" || exit 0
+    remove_dir "$INSTALL_DIR"
+    remove_dir "$HOME/.local/go-packages"
+    remove_file "$BIN_DIR/go"
+    remove_file "$BIN_DIR/gofmt"
+    remove_file "$BIN_DIR/gopls"
+    remove_file "$ENV_DIR/go.sh"
+    exit 0
+fi
+
 tmp_env="$(mktemp)"
 cat > "$tmp_env" << 'EOF'
 # Go 环境配置

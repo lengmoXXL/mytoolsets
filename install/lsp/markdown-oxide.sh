@@ -16,15 +16,22 @@ BINARY="${BIN_DIR}/markdown-oxide"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
+
+选项:
+  --remove  卸载 markdown-oxide
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -44,6 +51,17 @@ fi
 export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
 export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
 
+VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
+MARKER="$VERSIONS_DIR/markdown-oxide"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "markdown-oxide" || exit 0
+    remove_dir "$INSTALL_ROOT"
+    remove_file "$BINARY"
+    remove_file "$MARKER"
+    exit 0
+fi
+
 if [[ -x "$CARGO" ]]; then
     export RUSTUP_HOME="${RUST_DIR}/rustup"
     export CARGO_HOME="${RUST_DIR}"
@@ -54,9 +72,6 @@ else
     echo "请先运行 install/compiler/rust.sh 安装 Rust"
     exit 1
 fi
-
-VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
-MARKER="$VERSIONS_DIR/markdown-oxide"
 
 if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"

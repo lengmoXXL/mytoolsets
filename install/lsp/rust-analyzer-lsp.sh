@@ -3,11 +3,30 @@
 # 可重入：已安装时跳过
 
 set -e
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
 
 RUST_DIR="${HOME}/.local/rust"
 BIN_DIR="${HOME}/.local/bin"
 RUSTUP="${BIN_DIR}/rustup"
 RUST_ANALYZER="${BIN_DIR}/rust-analyzer"
+
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "rust-analyzer" || exit 0
+    if [[ -x "$RUSTUP" ]]; then
+        "$RUSTUP" component remove rust-analyzer || true
+    fi
+    remove_file "$RUST_ANALYZER"
+    exit 0
+fi
 
 export RUSTUP_HOME="${RUST_DIR}/rustup"
 export CARGO_HOME="${RUST_DIR}"

@@ -8,9 +8,24 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
 ZIG_DIR="${HOME}/.local/zig"
 BIN_DIR="${HOME}/.local/bin"
 
-ZIG_VERSION="${1:-0.15.1}"
+REMOVE=0
+ZIG_VERSION="0.15.1"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) ZIG_VERSION="$1" ;;
+    esac
+    shift
+done
 
 ZIG_BIN="$ZIG_DIR/zig"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Zig" || exit 0
+    remove_dir "$ZIG_DIR"
+    remove_file "$BIN_DIR/zig"
+    exit 0
+fi
 
 echo "安装 Zig $ZIG_VERSION"
 

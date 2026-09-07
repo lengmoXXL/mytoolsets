@@ -8,10 +8,19 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_DIR="$HOME/.config/env.d"
 
-if ! command -v fzf &>/dev/null; then
-    echo "错误: fzf 未安装，请先运行 install/fzf.sh"
-    exit 1
-fi
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
 
 ensure_envd_loader() {
     local bashrc="$HOME/.bashrc"
@@ -37,6 +46,19 @@ EOF
 
 pj_source="$SCRIPT_DIR/../tools/pj/pj.sh"
 pj_dest="$ENV_DIR/pj.sh"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "pj" || exit 0
+    remove_file "$pj_dest"
+    remove_dir "$HOME/.pjs"
+    echo "提示: ~/.bashrc 中的 envd-loader 配置为共享设施，未删除"
+    exit 0
+fi
+
+if ! command -v fzf &>/dev/null; then
+    echo "错误: fzf 未安装，请先运行 install/fzf.sh"
+    exit 1
+fi
 
 if [[ "${UPDATE:-}" == "1" ]]; then
     if [[ ! -e "$pj_dest" ]]; then

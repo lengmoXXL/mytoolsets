@@ -6,6 +6,25 @@ BIN_DIR="$HOME/.local/bin"
 NPM="$BIN_DIR/npm"
 BINARY="$BIN_DIR/bash-language-server"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "bash-language-server" || exit 0
+    if [[ -x "$NPM" ]]; then
+        "$NPM" uninstall -g bash-language-server
+    else
+        remove_file "$BINARY"
+    fi
+    exit 0
+fi
+
 if [[ ! -x "$NPM" ]]; then
     echo "错误: npm 未安装在 $NPM"
     echo "请先运行 install/compiler/node.sh 安装 Node.js"

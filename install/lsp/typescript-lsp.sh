@@ -9,6 +9,23 @@ INSTALL_DIR="${HOME}/.local/typescript-language-server"
 BIN_DIR="${HOME}/.local/bin"
 BINARY="$BIN_DIR/typescript-language-server"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "typescript-language-server" || exit 0
+    remove_dir "$INSTALL_DIR"
+    remove_file "$BINARY"
+    remove_file "$BIN_DIR/tsserver"
+    exit 0
+fi
+
 if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"
     exit 0

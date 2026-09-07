@@ -11,21 +11,24 @@ GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0 [--binary|--source]
+用法: $0 [--binary|--source] [--remove]
 
 选项:
   --binary  从 GitHub Release 下载预编译包 (默认)
   --source  从源码编译
+  --remove  卸载 typos-lsp
 
 环境变量:
   CN=1     通过国内代理访问 GitHub
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case $1 in
         --binary) MODE="binary"; shift ;;
         --source) MODE="source"; shift ;;
+        --remove) REMOVE=1; shift ;;
         -h | --help) usage; exit 0 ;;
         *) usage; exit 1 ;;
     esac
@@ -36,6 +39,14 @@ BINARY="$BIN_DIR/typos-lsp"
 
 VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
 MARKER="$VERSIONS_DIR/typos-lsp"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "typos-lsp" || exit 0
+    remove_file "$BINARY"
+    remove_file "$MARKER"
+    remove_file "$HOME/.local/rust/bin/typos-lsp"
+    exit 0
+fi
 
 if [[ "${UPDATE:-}" == "1" && ! -x "$BINARY" ]]; then
     echo "未安装，跳过: $BINARY"

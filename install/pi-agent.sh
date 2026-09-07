@@ -15,16 +15,18 @@ NPM_REGISTRY=""
 
 usage() {
     cat << EOF
-用法: $0 [--registry URL]
+用法: $0 [--registry URL] [--remove]
 
 选项:
   --registry URL  使用指定 npm registry
+  --remove        卸载 Pi Agent
 
 环境变量:
   CN=1     使用 npmmirror npm registry
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --registry)
@@ -34,6 +36,9 @@ while [[ $# -gt 0 ]]; do
             fi
             NPM_REGISTRY="$2"
             shift
+            ;;
+        --remove)
+            REMOVE=1
             ;;
         -h | --help)
             usage
@@ -46,6 +51,17 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "pi" || exit 0
+    if command -v npm &>/dev/null; then
+        npm uninstall -g --prefix "$NPM_PREFIX" "$PI_PACKAGE"
+    else
+        remove_file "$PI_BIN"
+        remove_dir "$NPM_PREFIX/lib/node_modules/@earendil-works/pi-coding-agent"
+    fi
+    exit 0
+fi
 
 if [[ "${CN:-}" == "1" && -z "$NPM_REGISTRY" ]]; then
     NPM_REGISTRY="https://registry.npmmirror.com"

@@ -9,6 +9,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NVIM_SOURCE="$SCRIPT_DIR/../configs/nvim"
 NVIM_DEST="$HOME/.config/nvim"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "nvim 配置" || exit 0
+    remove_dir "$NVIM_DEST"
+    exit 0
+fi
+
 if [[ ! -d "$NVIM_SOURCE" ]]; then
     echo "错误: 源目录不存在: $NVIM_SOURCE"
     exit 1

@@ -12,14 +12,21 @@ HERDR_DEST="$HERDR_DIR/config.toml"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
 
 安装 Herdr 配置到 ~/.config/herdr/config.toml。
+
+选项:
+  --remove  卸载 Herdr 配置
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -29,7 +36,14 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
     esac
+    shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Herdr 配置" || exit 0
+    remove_file "$HERDR_DEST"
+    exit 0
+fi
 
 if [[ ! -f "$HERDR_SOURCE" ]]; then
     echo "错误: 源配置不存在: $HERDR_SOURCE"

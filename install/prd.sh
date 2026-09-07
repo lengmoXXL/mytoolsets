@@ -10,6 +10,21 @@ PROJECT_DIR="${SCRIPT_DIR}/../tools/prd"
 SOURCE_PATH="${PROJECT_DIR}/dist/prd.cjs"
 TARGET_PATH="${BIN_DIR}/prd"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "prd" || exit 0
+    remove_file "$TARGET_PATH"
+    exit 0
+fi
+
 if [[ ! -f "${PROJECT_DIR}/package.json" ]]; then
     echo "Error: prd package not found: ${PROJECT_DIR}" >&2
     exit 1

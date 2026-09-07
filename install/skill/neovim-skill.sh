@@ -14,15 +14,22 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
+
+选项:
+  --remove  卸载 neovim-skill
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -42,6 +49,13 @@ fi
 
 VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
 MARKER="$VERSIONS_DIR/neovim-skill"
+
+if [[ "$REMOVE" == "1" ]]; then
+  confirm_remove "neovim-skill" || exit 0
+  remove_dir "$DEST"
+  remove_file "$MARKER"
+  exit 0
+fi
 
 if [[ -d "$DEST" && "${UPDATE:-}" != "1" ]]; then
     echo "neovim-skill 已安装: $DEST"

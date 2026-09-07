@@ -14,15 +14,22 @@ GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
+
+选项:
+  --remove  卸载 codex
 
 环境变量:
   CN=1     通过国内代理下载 GitHub Release 文件
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -34,6 +41,13 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "codex" || exit 0
+    remove_file "$CODEX_BIN"
+    remove_file "$CODE_MODE_HOST_BIN"
+    exit 0
+fi
 
 for dep in curl sed tar install uname mktemp; do
     if ! command -v "$dep" &>/dev/null; then

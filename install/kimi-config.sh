@@ -12,14 +12,21 @@ THEMES_DEST="$KIMI_HOME/themes"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
 
 安装 Kimi Code 主题到 ${KIMI_CODE_HOME:-~/.kimi-code}/themes/。
+
+选项:
+  --remove  卸载 Kimi Code 主题
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -29,7 +36,14 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
     esac
+    shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Kimi Code 主题" || exit 0
+    remove_dir "$THEMES_DEST"
+    exit 0
+fi
 
 if [[ ! -d "$THEMES_SOURCE" ]]; then
     echo "错误: 源目录不存在: $THEMES_SOURCE"

@@ -10,6 +10,29 @@ BIN_DIR="${HOME}/.local/bin"
 PYTHON_DIR="${HOME}/.local/python3.11"
 UV_BIN="${BIN_DIR}/uv"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
+        *)
+            echo "未知参数: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "tldr" || exit 0
+    if [[ -x "$UV_BIN" && -x "$PYTHON_DIR/bin/python3" ]]; then
+        "$UV_BIN" pip uninstall --python "$PYTHON_DIR/bin/python3" tldr
+    fi
+    remove_file "$BIN_DIR/tldr"
+    exit 0
+fi
+
 mkdir -p "$BIN_DIR"
 
 if [[ "${UPDATE:-}" == "1" && ! -x "$BIN_DIR/tldr" ]]; then

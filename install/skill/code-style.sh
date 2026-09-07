@@ -7,6 +7,21 @@ src="$root/skills/code-style"
 dest_root="${AGENTS_HOME:-$HOME/.agents}/skills"
 dest="$dest_root/code-style"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --remove) REMOVE=1 ;;
+    *) echo "未知参数: $1" >&2; exit 1 ;;
+  esac
+  shift
+done
+
+if [[ "$REMOVE" == "1" ]]; then
+  confirm_remove "code-style skill" || exit 0
+  remove_dir "$dest"
+  exit 0
+fi
+
 if [[ ! -f "$src/SKILL.md" ]]; then
   echo "Missing skill source: $src" >&2
   exit 1

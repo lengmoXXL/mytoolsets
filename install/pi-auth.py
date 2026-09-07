@@ -6,6 +6,10 @@
 token/刷新状态由 pi 运行时维护，覆盖会丢掉已登录状态。需要更新时手动执行：
 
     python3 install/pi-auth.py
+
+卸载（删除本脚本管理的 key，保留其余条目）：
+
+    python3 install/pi-auth.py --remove
 """
 
 import json
@@ -16,7 +20,51 @@ from pathlib import Path
 UPDATE = os.environ.get("UPDATE") == "1"
 
 
+def remove() -> int:
+    """从 ~/.pi/agent/auth.json 删除 configs/pi/auth.json 列出的所有 key。"""
+    try:
+        root = Path(__file__).resolve().parents[1]
+        source = root / "configs" / "pi" / "auth.json"
+
+        with source.open("r", encoding="utf-8") as fh:
+            auth = json.load(fh)
+
+        target = Path.home() / ".pi" / "agent" / "auth.json"
+        if not target.exists():
+            print(f"未安装: {target}")
+            return 0
+        with target.open("r", encoding="utf-8") as fh:
+            existing = json.load(fh)
+
+        found = [name for name in auth if name in existing]
+        if not found:
+            print(f"未安装: {target} 中没有本脚本管理的 key")
+            return 0
+        print(f"将删除: {', '.join(sorted(found))}")
+        try:
+            answer = input("确认删除以上 key? [y/N] ")
+        except EOFError:
+            answer = ""
+        if answer.strip().lower() not in ("y", "yes"):
+            print("已取消")
+            return 0
+
+        for name in found:
+            del existing[name]
+        target.write_text(
+            json.dumps(existing, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        target.chmod(0o600)
+        print(f"removed: {target}")
+        return 0
+    except (KeyError, OSError, TypeError, json.JSONDecodeError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+
 def main() -> int:
+    if "--remove" in sys.argv[1:]:
+        return remove()
     try:
         root = Path(__file__).resolve().parents[1]
         source = root / "configs" / "pi" / "auth.json"

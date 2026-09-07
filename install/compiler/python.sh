@@ -9,6 +9,27 @@ BIN_DIR="${HOME}/.local/bin"
 ENV_DIR="$HOME/.config/env.d"
 UV_BIN="${BIN_DIR}/uv"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Python 3.11 虚拟环境" || exit 0
+    remove_dir "$INSTALL_DIR"
+    remove_file "$BIN_DIR/python3"
+    remove_file "$BIN_DIR/pip3"
+    remove_file "$ENV_DIR/python.sh"
+    echo "提示: uv 安装的 python 3.11 运行时未删除，可用 'uv python uninstall 3.11' 手动清理"
+    exit 0
+fi
+
 mkdir -p "$BIN_DIR"
 
 if [[ ! -x "$UV_BIN" ]]; then
@@ -17,8 +38,6 @@ if [[ ! -x "$UV_BIN" ]]; then
 fi
 
 UV_CMD="$UV_BIN"
-
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
 
 if [[ "${UPDATE:-}" == "1" && ! -x "$INSTALL_DIR/bin/python3" ]]; then
     echo "未安装，跳过: $INSTALL_DIR/bin/python3"

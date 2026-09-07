@@ -12,14 +12,21 @@ GHOSTTY_DEST="$GHOSTTY_DIR/config"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
 
 安装 Ghostty 配置到 ~/.config/ghostty/config。
+
+选项:
+  --remove  卸载 Ghostty 配置
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -29,7 +36,14 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
     esac
+    shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Ghostty 配置" || exit 0
+    remove_file "$GHOSTTY_DEST"
+    exit 0
+fi
 
 if [[ ! -f "$GHOSTTY_SOURCE" ]]; then
     echo "错误: 源配置不存在: $GHOSTTY_SOURCE"

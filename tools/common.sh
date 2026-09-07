@@ -126,3 +126,45 @@ write_file_if_changed() {
     mv "$content_file" "$file"
     echo "$file 已更新"
 }
+
+# confirm_remove <描述>: 询问是否卸载，回答 y 才继续
+confirm_remove() {
+    local answer=""
+    read -r -p "是否卸载 $1? [y/N] " answer || answer=""
+    [[ "$answer" =~ ^[Yy]$ ]]
+}
+
+# remove_file <path>: 删除文件或符号链接，不存在则跳过
+remove_file() {
+    if [[ -e "$1" || -L "$1" ]]; then
+        rm -f "$1"
+        echo "已删除: $1"
+    fi
+}
+
+# remove_dir <path>: 删除目录，不存在则跳过
+remove_dir() {
+    if [[ -d "$1" ]]; then
+        rm -rf "$1"
+        echo "已删除: $1"
+    fi
+}
+
+# remove_managed_block <file> <name>: 删除 write_managed_block 管理的文本段（含标记行）
+remove_managed_block() {
+    local file="$1"
+    local name="$2"
+    local begin_marker="# BEGIN configs $name"
+    local end_marker="# END configs $name"
+    [[ -f "$file" ]] || return
+    grep -qF "$begin_marker" "$file" || return
+    local tmp_file
+    tmp_file="$(mktemp)"
+    awk -v begin="$begin_marker" -v end="$end_marker" '
+        $0 == begin { in_block = 1; next }
+        $0 == end { in_block = 0; next }
+        !in_block { print }
+    ' "$file" > "$tmp_file"
+    mv "$tmp_file" "$file"
+    echo "已删除: $file ($name)"
+}

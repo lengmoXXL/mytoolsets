@@ -10,6 +10,27 @@ INSTALL_DIR="${HOME}/.local/rust"
 BIN_DIR="${HOME}/.local/bin"
 RUST_VERSION="1.96.0"
 
+REMOVE=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --remove) REMOVE=1 ;;
+        *) echo "未知参数: $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+ENV_DIR="$HOME/.config/env.d"
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "Rust" || exit 0
+    remove_dir "$INSTALL_DIR"
+    remove_file "$BIN_DIR/cargo"
+    remove_file "$BIN_DIR/rustc"
+    remove_file "$BIN_DIR/rustup"
+    remove_file "$ENV_DIR/rust.sh"
+    exit 0
+fi
+
 export RUSTUP_HOME="$INSTALL_DIR/rustup"
 export CARGO_HOME="$INSTALL_DIR"
 
@@ -34,7 +55,6 @@ git-fetch-with-cli = true
 EOF
 write_file_if_changed "$INSTALL_DIR/config.toml" "$tmp_config"
 
-ENV_DIR="$HOME/.config/env.d"
 tmp_env="$(mktemp)"
 cat > "$tmp_env" << 'EOF'
 # Rust 环境配置

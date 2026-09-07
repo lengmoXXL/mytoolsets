@@ -14,15 +14,22 @@ GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
-用法: $0
+用法: $0 [--remove]
+
+选项:
+  --remove  卸载 tmux 配置与 TPM
 
 环境变量:
   CN=1     通过国内代理 clone GitHub 仓库
 EOF
 }
 
+REMOVE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --remove)
+            REMOVE=1
+            ;;
         -h | --help)
             usage
             exit 0
@@ -34,6 +41,13 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ "$REMOVE" == "1" ]]; then
+    confirm_remove "tmux 配置与 TPM" || exit 0
+    remove_file "$TMUX_DEST"
+    remove_dir "$TPM_DIR"
+    exit 0
+fi
 
 if [[ "${CN:-}" == "1" ]]; then
     TPM_REPO="${GITHUB_PROXY_PREFIX}${TPM_REPO}"
