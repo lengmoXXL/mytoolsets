@@ -1,13 +1,13 @@
 #!/bin/bash
 # Install or update Herdr from GitHub Releases.
-# The installed release tag is pinned here; use tools/github-release-latest.sh to check updates.
+# The installed release tag is pinned here; use tools/latest-version.sh to check updates.
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
 BIN_DIR="${HOME}/.local/bin"
 HERDR_BIN="${BIN_DIR}/herdr"
-HERDR_VERSION="v0.8.2"
+HERDR_VERSION="v0.9.0"
 CURL_USER_AGENT="configs-install-herdr"
 GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 

@@ -134,8 +134,8 @@ configs/
     ├── codex_batch.py
     ├── common.sh                # install 脚本共享函数（confirm_update / managed block / write-if-changed）
     ├── doc-research-init.sh      # 初始化文献调研项目（raw/tr/dist + 工作流 README）
-    ├── github-release-latest.sh
     ├── git-prune-merged.sh
+    ├── latest-version.sh        # 查询工具的上游最新版本（--all 列出全部）
     ├── nvim_ft.py               # 按 git URL 管理 Neovim filetype
     ├── pj/                      # 仓库命令工具
     │   └── ...
@@ -151,7 +151,7 @@ configs/
 新增 `install/` 脚本须遵守以下协议，才能接入 `setup.sh` / `sync.sh`：
 
 - **一件事**：一个脚本只装一个工具；缺依赖时报错并指引对应脚本，不自动安装
-- **固定版本**：版本/commit/tag 写成脚本常量，不查最新版；无版本输出的写入 `~/.local/share/configs-setup/versions/` 比对
+- **固定版本**：版本/commit/tag 写成脚本常量，不查最新版；无版本输出的写入 `~/.local/share/configs-setup/versions/` 比对；升级前用 `tools/latest-version.sh` 查上游版本
 - **CN=1**：走国内代理/镜像，读取处直接 `[[ "${CN:-}" == "1" ]]`，不加 `-cn` 参数
 - **--update**：未安装则跳过；已安装且不一致时先 `confirm_update` 再执行
 - **--remove**：卸载该脚本安装的文件/目录/托管块，先 `confirm_remove` 再执行；删除用 `remove_file` / `remove_dir` / `remove_managed_block`（`tools/common.sh`）

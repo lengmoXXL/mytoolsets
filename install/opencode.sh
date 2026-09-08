@@ -1,6 +1,6 @@
 #!/bin/bash
 # Install opencode from GitHub Releases.
-# The installed version is pinned here; use tools/github-release-latest.sh to check updates.
+# The installed version is pinned here; use tools/latest-version.sh to check updates.
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"

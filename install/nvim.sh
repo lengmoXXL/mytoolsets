@@ -1,5 +1,5 @@
 #!/bin/bash
-# 安装固定版本的 Neovim；升级时先用 tools/github-release-latest.sh 查询最新 tag，再改 VERSION
+# 安装固定版本的 Neovim；升级时先用 tools/latest-version.sh 查询最新 tag，再改 VERSION
 #   macOS: 官方预编译包（无需 cmake/gettext）
 #   Linux: 源码编译
 
