@@ -22,7 +22,7 @@ peach = "#CE9178"
 prefix = "ctrl+space"
 
 [ui]
-pane_borders = false
+pane_borders = "off"
 pane_outer_borders = false
 pane_gaps = false
 hide_tab_bar_when_single_tab = true
