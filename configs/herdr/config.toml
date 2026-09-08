@@ -26,3 +26,9 @@ pane_borders = "off"
 pane_outer_borders = false
 pane_gaps = false
 hide_tab_bar_when_single_tab = true
+
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", "workspace"],
+  ["machine", "agent"],
+]
