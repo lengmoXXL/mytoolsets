@@ -1,5 +1,23 @@
 {
   "providers": {
+    "deepseek": {
+      "models": [
+        {
+          "id": "deepseek-flash",
+          "name": "DeepSeek Flash",
+          "api": "openai-completions",
+          "provider": "deepseek",
+          "baseUrl": "https://api.deepseek.com",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 300000,
+          "maxTokens": 384000,
+          "cost": { "input": 0.14, "output": 0.56, "cacheRead": 0.0028, "cacheWrite": 0 },
+          "thinkingLevelMap": { "minimal": null, "low": "low", "medium": null, "high": "high", "max": "max" },
+          "compat": { "supportsStore": false, "supportsDeveloperRole": false, "maxTokensField": "max_tokens", "requiresReasoningContentOnAssistantMessages": true, "thinkingFormat": "deepseek" }
+        }
+      ]
+    },
     "qwen-token-plan-cn": {
       "modelOverrides": {
         "deepseek-v4-flash-0731": { "contextWindow": 300000 },
