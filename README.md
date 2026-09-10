@@ -16,7 +16,6 @@ configs/
 │   ├── clashctl.sh
 │   ├── cmake.sh
 │   ├── codex.sh
-│   ├── codex-batch.sh
 │   ├── doc-research.sh         # doc-research CLI（固定 commit，对比远端提示更新）
 │   ├── doc-research-init.sh
 │   ├── fd.sh
@@ -132,7 +131,6 @@ configs/
 │   └── publish-frontend-draw-assets.sh
 └── tools/
     ├── build-perf-to-profile.sh
-    ├── codex_batch.py
     ├── common.sh                # install 脚本共享函数（confirm_update / managed block / write-if-changed）
     ├── doc-research-init.sh      # 初始化文献调研项目（raw/tr/dist + 工作流 README）
     ├── git-prune-merged.sh
