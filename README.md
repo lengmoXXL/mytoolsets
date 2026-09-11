@@ -27,7 +27,6 @@ configs/
 │   ├── git-prune-merged.sh
 │   ├── herdr.sh
 │   ├── herdr-config.sh
-│   ├── herdr-resize.sh
 │   ├── kimi.sh
 │   ├── kimi-config.sh
 │   ├── nvim.sh
@@ -134,7 +133,6 @@ configs/
     ├── common.sh                # install 脚本共享函数（confirm_update / managed block / write-if-changed）
     ├── doc-research-init.sh      # 初始化文献调研项目（raw/tr/dist + 工作流 README）
     ├── git-prune-merged.sh
-    ├── herdr-resize.sh          # 半幅调整 herdr pane 分栏比例（herdr 键位步长不可配）
     ├── latest-version.sh        # 查询工具的上游最新版本（--all 列出全部）
     ├── nvim_ft.py               # 按 git URL 管理 Neovim filetype
     ├── pj/                      # 仓库命令工具
