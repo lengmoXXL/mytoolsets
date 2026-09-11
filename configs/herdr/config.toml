@@ -24,7 +24,7 @@ prefix = "ctrl+space"
 [ui]
 pane_borders = "off"
 pane_outer_borders = false
-pane_gaps = false
+pane_gaps = true
 hide_tab_bar_when_single_tab = true
 
 [ui.sidebar.agents]
