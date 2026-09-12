@@ -36,8 +36,8 @@ fi
 export RUSTUP_HOME="$INSTALL_DIR/rustup"
 export CARGO_HOME="$INSTALL_DIR"
 
-export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
-export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
+export RUSTUP_DIST_SERVER="https://mirrors.ustc.edu.cn/rust-static"
+export RUSTUP_UPDATE_ROOT="https://mirrors.ustc.edu.cn/rust-static/rustup"
 
 if [[ "$UPDATE" == "1" && ! -x "$INSTALL_DIR/bin/cargo" ]]; then
     echo "未安装，跳过: $INSTALL_DIR/bin/cargo"
@@ -62,8 +62,8 @@ cat > "$tmp_env" << 'EOF'
 # Rust 环境配置
 export RUSTUP_HOME="$HOME/.local/rust/rustup"
 export CARGO_HOME="$HOME/.local/rust"
-export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
-export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
+export RUSTUP_DIST_SERVER="https://mirrors.ustc.edu.cn/rust-static"
+export RUSTUP_UPDATE_ROOT="https://mirrors.ustc.edu.cn/rust-static/rustup"
 EOF
 write_file_if_changed "$ENV_DIR/rust.sh" "$tmp_env"
 

@@ -32,8 +32,8 @@ fi
 
 export RUSTUP_HOME="${RUST_DIR}/rustup"
 export CARGO_HOME="${RUST_DIR}"
-export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
-export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
+export RUSTUP_DIST_SERVER="https://mirrors.ustc.edu.cn/rust-static"
+export RUSTUP_UPDATE_ROOT="https://mirrors.ustc.edu.cn/rust-static/rustup"
 
 if [[ "$UPDATE" == "1" && ! -x "$RUST_ANALYZER" ]]; then
     echo "未安装，跳过: $RUST_ANALYZER"

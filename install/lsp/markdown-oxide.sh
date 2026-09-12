@@ -53,8 +53,8 @@ if [[ "${CN:-}" == "1" ]]; then
     REPO_URL="${GITHUB_PROXY_PREFIX}${REPO_URL}"
 fi
 
-export RUSTUP_DIST_SERVER="https://mirrors.aliyun.com/rustup"
-export RUSTUP_UPDATE_ROOT="https://mirrors.aliyun.com/rustup/rustup"
+export RUSTUP_DIST_SERVER="https://mirrors.ustc.edu.cn/rust-static"
+export RUSTUP_UPDATE_ROOT="https://mirrors.ustc.edu.cn/rust-static/rustup"
 
 VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
 MARKER="$VERSIONS_DIR/markdown-oxide"
