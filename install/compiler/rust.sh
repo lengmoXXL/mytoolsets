@@ -8,7 +8,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
 
 INSTALL_DIR="${HOME}/.local/rust"
 BIN_DIR="${HOME}/.local/bin"
-RUST_VERSION="1.96.0"
+RUST_VERSION="1.98.1"
 
 UPDATE=0
 REMOVE=0
