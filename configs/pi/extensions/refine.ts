@@ -225,8 +225,14 @@ Report the verdict ONLY by calling the structured_output tool with
 			{
 				customType: "refine-control",
 				content: `<refine_control round="${completedRound}">
-Fix the issues below so the work satisfies the acceptance criteria. A follow-up
-check runs automatically after this turn; do not restate the criteria or findings.
+Judge every finding below against the acceptance criteria before fixing anything:
+fix the real ones; for a finding you judge wrong, do not fix it and say plainly
+that you reject it and why (cite the file, line, or the criterion it misreads),
+so the next round does not raise it again; if you cannot tell whether a finding
+is right, do not guess -- call the ask_user_question tool with the finding and
+your doubt, then act on the user's decision.
+A follow-up check runs automatically after this turn; do not restate the criteria
+or the findings you are fixing.
 After fixing, re-check every criterion yourself to ensure nothing is missed.
 If the criteria rely on a skill, reload its SKILL.md this round before fixing.
 
