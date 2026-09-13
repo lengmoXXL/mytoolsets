@@ -88,8 +88,6 @@ configs/
 │   │       └── gray.json
 │   ├── nvim/
 │   │   ├── init.lua
-│   │   ├── patches/
-│   │   │   └── neogit-codediff-session-config.patch  # neogit 集成适配 codediff 新 API，由 neogit.lua 的 build 钩子自动应用
 │   │   └── lua/
 │   │       ├── buffer_columns.lua
 │   │       ├── caption_jump.lua
