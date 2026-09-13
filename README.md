@@ -18,8 +18,9 @@ configs/
 │   ├── codex.sh
 │   ├── doc-research.sh         # doc-research CLI（固定 commit，对比远端提示更新）
 │   ├── doc-research-init.sh
-│   ├── dsh-plugins.sh         # dsh web profile 插件（dsh-git、dsh-remote-workspace）
-│   ├── dsh.sh                 # DeepSeek Harness CLI（npm 固定版本）
+│   ├── dsh-auth.py           # .credentials.yaml 只写 DEEPSEEK_API_KEY（sync: skip，手动执行）
+│   ├── dsh-plugins.sh        # dsh web profile 插件（dsh-git、dsh-remote-workspace）
+│   ├── dsh.sh                # DeepSeek Harness CLI（npm 固定版本）
 │   ├── fd.sh
 │   ├── fonts.sh
 │   ├── fzf.sh
