@@ -14,7 +14,7 @@ usage() {
 Packages:
   GitHub release  ripgrep(rg) fzf fd cmake tmux nvim uv codex opencode herdr
                   lua-lsp starpls typos-lsp(typos) rust sarasa aurulent droid
-  npm             pi-agent(pi) playwright typescript-lsp bash-lsp pyright
+  npm             pi-agent(pi) pnpm playwright typescript-lsp bash-lsp pyright
   npm next        dsh
   PyPI            tldr
   crates.io       tree-sitter
@@ -44,6 +44,7 @@ entry() {
         aurulent | droid | droidsansmono) echo "gh ryanoasis/nerd-fonts" ;;
         pi-agent | pi) echo "npm @earendil-works/pi-coding-agent" ;;
         playwright) echo "npm playwright" ;;
+        pnpm) echo "npm pnpm" ;;
         typescript-lsp) echo "npm typescript-language-server" ;;
         bash-lsp) echo "npm bash-language-server" ;;
         pyright) echo "npm pyright" ;;
@@ -67,7 +68,7 @@ entry() {
 }
 
 ALL_PACKAGES="ripgrep fzf fd cmake tmux nvim uv codex opencode herdr lua-lsp starpls
-typos-lsp rust pi-agent playwright typescript-lsp bash-lsp pyright tldr tree-sitter
+typos-lsp rust pi-agent pnpm playwright typescript-lsp bash-lsp pyright tldr tree-sitter
 go gopls node zig kimi dsh doc-research neovim-skill markdown-oxide sarasa aurulent droid
 dsh-git dsh-remote-workspace"
 

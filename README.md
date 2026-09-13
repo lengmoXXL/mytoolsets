@@ -47,6 +47,7 @@ configs/
 │   ├── pi-config.sh           # 配置 + 自研 extensions
 │   ├── pj.sh
 │   ├── playwright.sh
+│   ├── pnpm.sh                # pnpm（dsh plugin 管理 profile 依赖用，npm 固定版本）
 │   ├── prd.sh
 │   ├── ripgrep.sh
 │   ├── style-check.sh

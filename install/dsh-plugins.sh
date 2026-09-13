@@ -82,7 +82,7 @@ for dep in git npm dsh pnpm; do
     if ! command -v "$dep" &>/dev/null; then
         case "$dep" in
             dsh) echo "错误: 缺少 dsh，请先运行 $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dsh.sh" >&2 ;;
-            pnpm) echo "错误: 缺少 pnpm（dsh plugin 用它管理 profile）: npm install -g pnpm" >&2 ;;
+            pnpm) echo "错误: 缺少 pnpm（dsh plugin 用它管理 profile 依赖），请先运行 $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/pnpm.sh" >&2 ;;
             *) echo "错误: 缺少依赖 $dep" >&2 ;;
         esac
         exit 1
