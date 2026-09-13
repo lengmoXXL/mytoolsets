@@ -1,6 +1,6 @@
 #!/bin/bash
 # 查询工具的上游最新版本
-# 来源: GitHub release / npm / PyPI / crates.io / go / node / zig / kimi / git commit
+# 来源: GitHub release / npm / npm next / PyPI / crates.io / go / node / zig / kimi / git commit
 
 set -euo pipefail
 
@@ -15,10 +15,11 @@ Packages:
   GitHub release  ripgrep(rg) fzf fd cmake tmux nvim uv codex opencode herdr
                   lua-lsp starpls typos-lsp(typos) rust sarasa aurulent droid
   npm             pi-agent(pi) playwright typescript-lsp bash-lsp pyright
+  npm next        dsh
   PyPI            tldr
   crates.io       tree-sitter
   其他            go gopls node zig kimi
-  git commit      doc-research neovim-skill markdown-oxide
+  git commit      doc-research neovim-skill markdown-oxide dsh-git dsh-remote-workspace
 EOF
 }
 
@@ -46,6 +47,8 @@ entry() {
         typescript-lsp) echo "npm typescript-language-server" ;;
         bash-lsp) echo "npm bash-language-server" ;;
         pyright) echo "npm pyright" ;;
+        # dsh 的固定版本取自 next 通道（latest 还停在更早的 rc）
+        dsh) echo "npmnext @deepseek-ai/dsh" ;;
         tldr) echo "pypi tldr" ;;
         tree-sitter) echo "crates tree-sitter-cli" ;;
         go) echo "go -" ;;
@@ -56,6 +59,8 @@ entry() {
         doc-research) echo "commit https://github.com/lengmoXXL/doc-research.git" ;;
         neovim-skill) echo "commit https://github.com/lengmoXXL/neovim-skill.git" ;;
         markdown-oxide) echo "commit https://github.com/lengmoXXL/markdown-oxide.git" ;;
+        dsh-git) echo "commit https://github.com/lengmoXXL/dsh-git.git" ;;
+        dsh-remote-workspace) echo "commit https://github.com/lengmoXXL/dsh-remote-workspace.git" ;;
         */*) echo "gh $1" ;;
         *) return 1 ;;
     esac
@@ -63,7 +68,8 @@ entry() {
 
 ALL_PACKAGES="ripgrep fzf fd cmake tmux nvim uv codex opencode herdr lua-lsp starpls
 typos-lsp rust pi-agent playwright typescript-lsp bash-lsp pyright tldr tree-sitter
-go gopls node zig kimi doc-research neovim-skill markdown-oxide sarasa aurulent droid"
+go gopls node zig kimi dsh doc-research neovim-skill markdown-oxide sarasa aurulent droid
+dsh-git dsh-remote-workspace"
 
 latest() {
     local source="$1" target="$2"
@@ -75,6 +81,10 @@ latest() {
         npm)
             curl -fsSL --max-time 20 "https://registry.npmjs.org/${target}/latest" |
                 python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])'
+            ;;
+        npmnext)
+            curl -fsSL --max-time 20 "https://registry.npmjs.org/${target}" |
+                python3 -c 'import json, sys; print(json.load(sys.stdin)["dist-tags"]["next"])'
             ;;
         pypi)
             curl -fsSL --max-time 20 "https://pypi.org/pypi/${target}/json" |
