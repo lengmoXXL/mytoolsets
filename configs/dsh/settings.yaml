@@ -1,0 +1,51 @@
+# dsh 用户设置（~/.dsh/settings.yaml）。dsh 自己会追加运行态字段
+# （如 ui-onboarding），同步时会以本文件为准，那些字段会被去掉。
+agent-default-model:
+  provider: deepseek-official
+  model: deepseek-flash
+  reasoningEffort: high
+llm-pi-ai:
+  providers:
+    deepseek:
+      apiKeyEnv: DEEPSEEK_API_KEY
+    kimi-coding:
+      apiKeyEnv: KIMI_API_KEY
+    qwen-token-plan-cn:
+      apiKeyEnv: QWEN_TOKEN_PLAN_CN_API_KEY
+      # 该路由的内置 catalog 还没收录 v4.1；models 是替换语义，
+      # 所以这里要把继续供应的模型全部列出（其余字段从 catalog 继承）。
+      models:
+        - id: MiniMax-M2.5
+        - id: deepseek-v3.2
+        - id: deepseek-v4-flash
+        - id: deepseek-v4-flash-0731
+        - id: deepseek-v4-pro
+        - id: deepseek-v4-pro-0813
+        - id: glm-5
+        - id: glm-5.1
+        - id: glm-5.2
+        - id: kimi-k2.5
+        - id: kimi-k2.6
+        - id: kimi-k2.7-code
+        - id: qwen3.6-flash
+        - id: qwen3.6-plus
+        - id: qwen3.7-max
+        - id: qwen3.7-plus
+        - id: qwen3.8-flash
+        - id: qwen3.8-max
+        - id: deepseek-v4.1-flash
+          name: DeepSeek V4.1 Flash
+          contextWindow: 300000
+          maxTokens: 384000
+          # 只有 off 允许留空，其余档位必须给出线值
+          reasoningEfforts:
+            off: null
+            high: high
+            max: max
+          compat:
+            thinkingFormat: qwen
+            supportsDeveloperRole: false
+            supportsStore: false
+            supportsReasoningEffort: true
+    zai-coding-cn:
+      apiKeyEnv: ZAI_CODING_CN_API_KEY
