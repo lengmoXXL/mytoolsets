@@ -1,7 +1,7 @@
 #!/bin/bash
-# 安装/更新 dsh 插件（dsh-git、dsh-remote-workspace）到 web profile
-# 源码固定在 ~/.local/share/dsh-plugins/<name>，按 PINNED_COMMIT 拉取后本地构建再 link 进 profile
-# （两个插件都没有 prepare 脚本，不能直接 pnpm add git 依赖）
+# 安装/更新 dsh 插件到 web profile：dsh-git、dsh-remote-workspace、dsh-terminal
+# 源码固定在 ~/.local/share/dsh-plugins/<repo>，按 PINNED_COMMIT 拉取后本地构建再 link 进 profile
+# （插件没有 prepare 脚本，不能直接 pnpm add git 依赖；remote-workspace 的 terminal 插件是仓库里的独立包）
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
@@ -14,10 +14,10 @@ VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
 GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 NPM_REGISTRY=""
 
-# name|repo|commit
+# repo|url|commit|链接进 profile 的包（<包目录>:<包名>，逗号分隔；包目录相对仓库根）
 PLUGINS=(
-    "dsh-git|https://github.com/lengmoXXL/dsh-git.git|79f6c37d3b846fe37db0e55417257c073d94fcf2"
-    "dsh-remote-workspace|https://github.com/lengmoXXL/dsh-remote-workspace.git|db72cffd14a0500ac1aaa4b5c987f8354dc75361"
+    "dsh-git|https://github.com/lengmoXXL/dsh-git.git|8a39c366dcdff3455c2c65d6fa3bc6a72538d733|.:dsh-git"
+    "dsh-remote-workspace|https://github.com/lengmoXXL/dsh-remote-workspace.git|3c9f4a402a5177cbde0a1169de46f86db28d98d1|packages/remote-workspace:dsh-remote-workspace,packages/terminal:dsh-terminal"
 )
 
 usage() {
@@ -25,7 +25,7 @@ usage() {
 用法: $0 [--remove] [--update]
 
 选项:
-  --remove  从 profile 卸载两个插件，并删除源码目录
+  --remove  从 profile 卸载这些插件，并删除源码目录
   --update  更新已安装的插件（未安装则跳过）
 
 环境变量:
@@ -66,11 +66,16 @@ plugin_linked() {
 }
 
 if [[ "$REMOVE" == "1" ]]; then
-    confirm_remove "dsh 插件 (dsh-git, dsh-remote-workspace)" || exit 0
+    confirm_remove "dsh 插件 (dsh-git, dsh-remote-workspace, dsh-terminal)" || exit 0
     for spec in "${PLUGINS[@]}"; do
-        IFS='|' read -r name _repo _commit <<< "$spec"
-        if command -v dsh &>/dev/null && in_profile "$name"; then
-            dsh plugin --profile "$PROFILE" remove "$name" || true
+        IFS='|' read -r name _repo _commit links <<< "$spec"
+        if command -v dsh &>/dev/null; then
+            for link in ${links//,/ }; do
+                package_name="${link##*:}"
+                if in_profile "$package_name"; then
+                    dsh plugin --profile "$PROFILE" remove "$package_name" || true
+                fi
+            done
         fi
         remove_dir "$PLUGIN_ROOT/$name"
         remove_file "$VERSIONS_DIR/$name"
@@ -94,14 +99,27 @@ if [[ "${CN:-}" == "1" ]]; then
 fi
 
 for spec in "${PLUGINS[@]}"; do
-    IFS='|' read -r name repo commit <<< "$spec"
+    IFS='|' read -r name repo commit links <<< "$spec"
     dir="$PLUGIN_ROOT/$name"
     marker="$VERSIONS_DIR/$name"
+
+    # 已装到位的判据：目录/版本标记齐全，且每个包都构建过并链接进 profile
+    stale=0
+    if [[ "$(cat "$marker" 2>/dev/null)" != "$commit" ]]; then
+        stale=1
+    fi
+    for link in ${links//,/ }; do
+        package="$dir/${link%%:*}"
+        package="${package%/.}"
+        if [[ ! -f "$package/lib/index.js" ]] || ! plugin_linked "$package"; then
+            stale=1
+        fi
+    done
 
     echo ""
     echo "==> $name @ ${commit:0:12}"
 
-    if [[ -d "$dir" && "$(cat "$marker" 2>/dev/null)" == "$commit" ]] && plugin_linked "$dir"; then
+    if [[ "$stale" == "0" ]]; then
         echo "$name 已是最新"
         continue
     fi
@@ -143,11 +161,15 @@ for spec in "${PLUGINS[@]}"; do
     (cd "$dir" && npm "${npm_args[@]}")
     (cd "$dir" && npm run build)
 
-    for artifact in lib/index.js lib/client.js; do
-        if [[ ! -f "$dir/$artifact" ]]; then
-            echo "错误: 构建产物缺失 $dir/$artifact" >&2
-            exit 1
-        fi
+    for link in ${links//,/ }; do
+        package="$dir/${link%%:*}"
+        package="${package%/.}"
+        for artifact in lib/index.js lib/client.js; do
+            if [[ ! -f "$package/$artifact" ]]; then
+                echo "错误: 构建产物缺失 $package/$artifact" >&2
+                exit 1
+            fi
+        done
     done
 
     if [[ "$dirty" == "0" ]]; then
@@ -155,11 +177,15 @@ for spec in "${PLUGINS[@]}"; do
         echo "$commit" > "$marker"
     fi
 
-    if plugin_linked "$dir"; then
-        echo "$name 已在 profile $PROFILE 中"
-    else
-        dsh plugin --profile "$PROFILE" add "$dir"
-    fi
+    for link in ${links//,/ }; do
+        package="$dir/${link%%:*}"
+        package="${package%/.}"
+        if plugin_linked "$package"; then
+            echo "${link##*:} 已在 profile $PROFILE 中"
+        else
+            dsh plugin --profile "$PROFILE" add "$package"
+        fi
+    done
     echo "$name 安装完成: $dir"
 done
 
