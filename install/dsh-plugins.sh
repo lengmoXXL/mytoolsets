@@ -17,7 +17,7 @@ NPM_REGISTRY=""
 # repo|url|commit|链接进 profile 的包（<包目录>:<包名>，逗号分隔；包目录相对仓库根）
 PLUGINS=(
     "dsh-git|https://github.com/lengmoXXL/dsh-git.git|8a39c366dcdff3455c2c65d6fa3bc6a72538d733|.:dsh-git"
-    "dsh-remote-workspace|https://github.com/lengmoXXL/dsh-remote-workspace.git|3c9f4a402a5177cbde0a1169de46f86db28d98d1|packages/remote-workspace:dsh-remote-workspace,packages/terminal:dsh-terminal"
+    "dsh-remote-workspace|https://github.com/lengmoXXL/dsh-remote-workspace.git|ab8d51979bd0ff4a546bbcf3b3caf8b534fee2a4|packages/remote-workspace:dsh-remote-workspace,packages/terminal:dsh-terminal"
 )
 
 usage() {
