@@ -1,23 +1,24 @@
 #!/bin/bash
-# 安装/更新 dsh 插件到 web profile：dsh-git、dsh-remote-workspace、dsh-terminal
-# 源码固定在 ~/.local/share/dsh-plugins/<repo>，按 PINNED_COMMIT 拉取后本地构建再 link 进 profile
-# （插件没有 prepare 脚本，不能直接 pnpm add git 依赖；remote-workspace 的 terminal 插件是仓库里的独立包）
+# 安装/更新 dsh 插件到 web profile：dsh-git、dsh-remote-workspace
+# 源码固定在 ~/.local/share/dsh-plugins/<repo>，按固定 commit 拉取后本地构建再 link 进 profile
+# （插件都自带 prepare，但 pnpm 默认拦该脚本，所以这里自己 clone + build）
 
 set -euo pipefail
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../tools/common.sh"
 
 PROFILE="web"
 PLUGIN_ROOT="${HOME}/.local/share/dsh-plugins"
 DSH_HOME_DIR="${DSH_HOME:-$HOME/.dsh}"
 PROFILE_MANIFEST="$DSH_HOME_DIR/profiles/$PROFILE/package.json"
+PROFILE_PATCH="$DSH_HOME_DIR/profiles/$PROFILE/cordis.patch.yml"
 VERSIONS_DIR="$HOME/.local/share/configs-setup/versions"
 GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 NPM_REGISTRY=""
 
-# repo|url|commit|链接进 profile 的包（<包目录>:<包名>，逗号分隔；包目录相对仓库根）
+# repo|url|commit|链接进 profile 的包（<包目录>:<包名>；包目录相对仓库根，仓库根写作 .）
 PLUGINS=(
     "dsh-git|https://github.com/lengmoXXL/dsh-git.git|8a39c366dcdff3455c2c65d6fa3bc6a72538d733|.:dsh-git"
-    "dsh-remote-workspace|https://github.com/lengmoXXL/dsh-remote-workspace.git|0c98af132538414e99512d57a378a75d92fe543f|packages/remote-workspace:dsh-remote-workspace,packages/terminal:dsh-terminal"
+    "dsh-remote-workspace|https://github.com/lengmoXXL/dsh-remote-workspace.git|a0b0921134cd48749a4f0ebecd2f9a0b8b3aa30e|.:dsh-remote-workspace"
 )
 
 usage() {
@@ -66,7 +67,7 @@ plugin_linked() {
 }
 
 if [[ "$REMOVE" == "1" ]]; then
-    confirm_remove "dsh 插件 (dsh-git, dsh-remote-workspace, dsh-terminal)" || exit 0
+    confirm_remove "dsh 插件 (dsh-git, dsh-remote-workspace)" || exit 0
     for spec in "${PLUGINS[@]}"; do
         IFS='|' read -r name _repo _commit links <<< "$spec"
         if command -v dsh &>/dev/null; then
@@ -80,6 +81,11 @@ if [[ "$REMOVE" == "1" ]]; then
         remove_dir "$PLUGIN_ROOT/$name"
         remove_file "$VERSIONS_DIR/$name"
     done
+
+    # 旧版本把 terminal 拆成独立包装过，卸载时一并清掉
+    if command -v dsh &>/dev/null && in_profile "dsh-terminal"; then
+        dsh plugin --profile "$PROFILE" remove "dsh-terminal" || true
+    fi
     exit 0
 fi
 
@@ -188,6 +194,15 @@ for spec in "${PLUGINS[@]}"; do
     done
     echo "$name 安装完成: $dir"
 done
+
+# dsh-terminal 曾是这个仓库里的独立包，现在并进了 dsh-remote-workspace：
+# profile 里残留的依赖或 patch 行会让 boot 失败（duplicate loader entry id: dsh-terminal）
+if grep -q "dsh-terminal" "$PROFILE_MANIFEST" "$PROFILE_PATCH" 2>/dev/null; then
+    echo ""
+    echo "注意: profile $PROFILE 仍引用 dsh-terminal（已并入 dsh-remote-workspace），重启前先清掉："
+    echo "  dsh plugin --profile $PROFILE remove dsh-terminal"
+    echo "  并删除 $PROFILE_PATCH 里的 dsh-terminal insert 行"
+fi
 
 echo ""
 echo "dsh 插件安装完成。重启 Web 服务生效: dsh web"
