@@ -268,6 +268,36 @@ ensure_router_disables() {
 # 先补齐停用再动插件：插件已装好的机器上，任何后续步骤失败都不该让它停在“不接管路由”的状态
 ensure_router_disables
 
+# 旧版把 terminal 当独立包（仓库是 packages/ 多包布局）并在 profile 里 link 它；新版并回主包，
+# 两边都会注册 /dsh-terminal/ws，同一条升级路由挂两次会让 boot 直接失败。清掉旧依赖与旧 clone 目录。
+migrate_legacy_install() {
+    local legacy dir stale
+
+    if [[ -f "$MANIFEST" ]] && grep -q '"dsh-terminal"' "$MANIFEST"; then
+        echo "旧布局的 dsh-terminal 已并入 dsh-remote-workspace，从 profile 移除…"
+        "$DSH_BIN" plugin --profile "$PROFILE" remove dsh-terminal || true
+    fi
+
+    for legacy in dsh-git dsh-remote-workspace; do
+        dir="${HOME}/.local/share/dsh-plugins/$legacy"
+        [[ -d "$dir" ]] || continue
+        # profile 还 link 着它就别动（开发时用 link: 指过来的情况）
+        if [[ -f "$MANIFEST" ]] && grep -q "dsh-plugins/$legacy" "$MANIFEST"; then
+            continue
+        fi
+        remove_dir "$dir"
+    done
+
+    # pnpm 卸载后会留下悬空的符号链接，清掉（还能解析到目标的不动）
+    for stale in dsh-terminal dsh-tty dsh-tty-local dsh-tty-remote; do
+        [[ -L "$PROFILE_DIR/node_modules/$stale" ]] || continue
+        [[ -e "$PROFILE_DIR/node_modules/$stale" ]] && continue
+        remove_file "$PROFILE_DIR/node_modules/$stale"
+    done
+}
+
+migrate_legacy_install
+
 rw_installed="$(plugin_version dsh-remote-workspace)"
 echo ""
 if [[ "$rw_installed" == "$RW_VERSION" ]]; then
