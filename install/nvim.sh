@@ -1,15 +1,18 @@
 #!/bin/bash
-# 安装固定版本的 Neovim；升级时先用 tools/latest-version.sh 查询最新 tag，再改 VERSION
-#   macOS: 官方预编译包（无需 cmake/gettext）
-#   Linux: 源码编译
+# 安装固定版本的 Neovim（macOS 用官方预编译包，Linux 源码编译）、env.d 别名与 nvim 配置（~/.config/nvim）
+# 升级时先用 tools/latest-version.sh 查询最新 tag，再改 VERSION；配置用 rsync 镜像
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 INSTALL_DIR="${HOME}/.local"
 BIN_DIR="${INSTALL_DIR}/bin"
 NVIM_BIN="${BIN_DIR}/nvim"
 VERSION="v0.12.5"
+NVIM_SOURCE="$SCRIPT_DIR/../configs/nvim"
+NVIM_DEST="$HOME/.config/nvim"
 GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
 usage() {
@@ -17,7 +20,7 @@ usage() {
 用法: $0 [--remove] [--update]
 
 选项:
-  --remove  卸载 Neovim 及其 env.d 配置
+  --remove  卸载 Neovim（含配置与 env.d 别名）
   --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
@@ -48,12 +51,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$REMOVE" == "1" ]]; then
-    confirm_remove "Neovim" || exit 0
+    confirm_remove "Neovim（含配置与 env.d 别名）" || exit 0
     remove_file "$NVIM_BIN"
     remove_file "$INSTALL_DIR/share/man/man1/nvim.1"
     remove_dir "$INSTALL_DIR/lib/nvim"
     remove_dir "$INSTALL_DIR/share/nvim"
     remove_managed_block "$HOME/.config/env.d/alias.sh" nvim-alias
+    remove_dir "$NVIM_DEST"
     exit 0
 fi
 
@@ -73,29 +77,6 @@ cleanup() {
     fi
 }
 trap cleanup EXIT
-
-exit_if_same_version_or_confirm_upgrade() {
-    if [[ ! -x "$NVIM_BIN" ]]; then
-        if [[ "$UPDATE" == "1" ]]; then
-            echo "未安装，跳过: $NVIM_BIN"
-            exit 0
-        fi
-        return 0
-    fi
-
-    local installed_version
-    installed_version="$("$NVIM_BIN" --version | head -1 | awk '{print $2}')"
-
-    if [[ "$installed_version" == "$VERSION" ]]; then
-        echo "Neovim ${VERSION} 已安装: $NVIM_BIN"
-        exit 0
-    fi
-
-    echo "检测到已安装 Neovim: ${installed_version:-unknown}"
-    echo "目标版本: ${VERSION}"
-
-    confirm_update "nvim: ${installed_version:-unknown} -> ${VERSION}" || exit 0
-}
 
 # 下载并解压到临时目录，输出解压后的根目录路径
 download_release() {
@@ -152,10 +133,6 @@ install_linux() {
 }
 
 setup_alias() {
-    if [[ "$UPDATE" == "1" && ! -x "$NVIM_BIN" ]]; then
-        return 0
-    fi
-
     local env_dir="${HOME}/.config/env.d"
     local alias_file="${env_dir}/alias.sh"
 
@@ -181,16 +158,68 @@ setup_alias() {
 }
 
 require_deps awk curl find head mktemp sed tar
+
+# ---- Neovim ----
+
+need_install=1
+if [[ -x "$NVIM_BIN" ]]; then
+    installed_version="$("$NVIM_BIN" --version | head -1 | awk '{print $2}')"
+
+    if [[ "$installed_version" == "$VERSION" ]]; then
+        echo "Neovim ${VERSION} 已安装: $NVIM_BIN"
+        need_install=0
+    else
+        echo "检测到已安装 Neovim: ${installed_version:-unknown}"
+        echo "目标版本: ${VERSION}"
+        confirm_update "nvim: ${installed_version:-unknown} -> ${VERSION}" || exit 0
+    fi
+else
+    if [[ "$UPDATE" == "1" ]]; then
+        echo "未安装，跳过: $NVIM_BIN"
+        exit 0
+    fi
+fi
+
+if [[ "$need_install" == "1" ]]; then
+    case "$(uname -s)" in
+        Darwin) install_macos ;;
+        *) install_linux ;;
+    esac
+
+    echo ""
+    echo "Neovim ${VERSION} 安装完成"
+    echo "  binary: $NVIM_BIN"
+    echo "  clipboard: OSC 52 (终端协议，无需额外工具)"
+    "$NVIM_BIN" --version | head -1
+fi
+
 setup_alias
-exit_if_same_version_or_confirm_upgrade
 
-case "$(uname -s)" in
-    Darwin) install_macos ;;
-    *) install_linux ;;
-esac
+# ---- 配置 ----
 
-echo ""
-echo "Neovim ${VERSION} 安装完成"
-echo "  binary: $NVIM_BIN"
-echo "  clipboard: OSC 52 (终端协议，无需额外工具)"
-"$NVIM_BIN" --version | head -1
+if [[ ! -d "$NVIM_SOURCE" ]]; then
+    echo "错误: 源目录不存在: $NVIM_SOURCE"
+    exit 1
+fi
+
+if [[ "$UPDATE" == "1" && ! -d "$NVIM_DEST" ]]; then
+    echo "未安装，跳过: $NVIM_DEST"
+    exit 0
+fi
+
+if ! command -v rsync &>/dev/null; then
+    echo "错误: 缺少依赖 rsync" >&2
+    exit 1
+fi
+
+if [[ "$UPDATE" == "1" ]]; then
+    changes="$(rsync -nai --delete "$NVIM_SOURCE/" "$NVIM_DEST/")"
+    if [[ -z "$changes" ]]; then
+        echo "已是最新: $NVIM_DEST"
+        exit 0
+    fi
+    echo "$changes"
+    confirm_update "nvim 配置" || exit 0
+fi
+rsync -ai --delete "$NVIM_SOURCE/" "$NVIM_DEST/"
+echo "nvim 配置已安装: $NVIM_DEST"

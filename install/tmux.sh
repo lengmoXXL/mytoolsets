@@ -1,27 +1,36 @@
 #!/bin/bash
-# 从源码编译安装 tmux 到 ~/.local
-# 可重入：已安装目标版本时跳过
+# 从源码编译安装 tmux 到 ~/.local，并安装 tmux 配置（~/.tmux.conf）与 TPM
+# 可重入：已安装目标版本时跳过；配置内容变化才写入
 
 set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 INSTALL_DIR="${HOME}/.local"
 BIN_DIR="${INSTALL_DIR}/bin"
 SRC_ROOT="${INSTALL_DIR}/src"
 TMUX_BIN="${BIN_DIR}/tmux"
 VERSION="3.7c"
+
+TMUX_SOURCE="$SCRIPT_DIR/../configs/tmux/tmux.conf"
+TMUX_DEST="$HOME/.tmux.conf"
+TPM_DIR="$HOME/.tmux/plugins/tpm"
+TPM_REPO="https://github.com/tmux-plugins/tpm.git"
+
 GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
+GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 
 usage() {
     cat << EOF
 用法: $0 [--remove] [--update]
 
 选项:
-  --remove  卸载 tmux 及编译源码目录
+  --remove  卸载 tmux（含编译源码目录）及其配置与 TPM
   --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
-  CN=1     通过国内代理下载 GitHub Release 文件
+  CN=1     通过国内代理下载 GitHub Release 文件与 clone 仓库
 EOF
 }
 
@@ -48,11 +57,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$REMOVE" == "1" ]]; then
-    confirm_remove "tmux" || exit 0
+    confirm_remove "tmux（CLI + 配置与 TPM）" || exit 0
     remove_file "$TMUX_BIN"
     remove_file "$INSTALL_DIR/share/man/man1/tmux.1"
     remove_dir "$SRC_ROOT/tmux-$VERSION"
+    remove_file "$TMUX_DEST"
+    remove_dir "$TPM_DIR"
     exit 0
+fi
+
+if [[ "${CN:-}" == "1" ]]; then
+    TPM_REPO="${GITHUB_PROXY_PREFIX}${TPM_REPO}"
 fi
 
 run_with_sudo() {
@@ -117,61 +132,111 @@ make_jobs() {
     fi
 }
 
-if [[ "$UPDATE" == "1" && ! -x "$TMUX_BIN" ]]; then
-    echo "未安装，跳过: $TMUX_BIN"
-    exit 0
-fi
+# ---- tmux ----
 
+need_install=0
 if [[ -x "$TMUX_BIN" ]]; then
     INSTALLED_VERSION="$("$TMUX_BIN" -V | awk '{print $2}')"
     if [[ "$INSTALLED_VERSION" == "$VERSION" ]]; then
         echo "tmux ${VERSION} 已安装: $TMUX_BIN"
+    else
+        echo "检测到已安装 tmux: ${INSTALLED_VERSION:-unknown}"
+        echo "目标版本: $VERSION"
+        confirm_update "tmux: ${INSTALLED_VERSION:-unknown} -> $VERSION" || exit 0
+        need_install=1
+    fi
+else
+    if [[ "$UPDATE" == "1" ]]; then
+        echo "未安装，跳过: $TMUX_BIN"
         exit 0
     fi
-
-    echo "检测到已安装 tmux: ${INSTALLED_VERSION:-unknown}"
-    echo "目标版本: $VERSION"
-    confirm_update "tmux: ${INSTALLED_VERSION:-unknown} -> $VERSION" || exit 0
+    need_install=1
 fi
 
-if build_deps_ready; then
-    echo "tmux 编译依赖已满足"
+if [[ "$need_install" == "1" ]]; then
+    if build_deps_ready; then
+        echo "tmux 编译依赖已满足"
+    else
+        install_build_deps
+    fi
+
+    DOWNLOAD_URL="https://github.com/tmux/tmux/releases/download/${VERSION}/tmux-${VERSION}.tar.gz"
+    if [[ "${CN:-}" == "1" ]]; then
+        DOWNLOAD_URL="${GITHUB_RELEASE_PROXY}${DOWNLOAD_URL}"
+    fi
+    SRC_DIR="${SRC_ROOT}/tmux-${VERSION}"
+    TMP_DIR="$(mktemp -d)"
+    TARBALL="${TMP_DIR}/tmux.tar.gz"
+
+    trap 'rm -rf "$TMP_DIR"' EXIT
+
+    mkdir -p "$BIN_DIR" "$SRC_ROOT"
+
+    echo "下载 tmux ${VERSION}..."
+    curl -fL "$DOWNLOAD_URL" -o "$TARBALL"
+
+    echo "解压源码到: $SRC_DIR"
+    rm -rf "$SRC_DIR"
+    mkdir -p "$SRC_DIR"
+    tar -xzf "$TARBALL" -C "$SRC_DIR" --strip-components=1
+
+    cd "$SRC_DIR"
+
+    echo "配置编译参数..."
+    ./configure --prefix="$INSTALL_DIR"
+
+    echo "编译中..."
+    make -j"$(make_jobs)"
+
+    echo "安装到: $INSTALL_DIR"
+    make install
+
+    echo ""
+    echo "tmux 安装完成: $TMUX_BIN"
+    "$TMUX_BIN" -V
+    echo "确保 $BIN_DIR 在 PATH 中"
+fi
+
+# ---- 配置与 TPM ----
+
+if [[ ! -f "$TMUX_SOURCE" ]]; then
+    echo "错误: 源配置不存在: $TMUX_SOURCE"
+    exit 1
+fi
+
+if [[ "$UPDATE" == "1" && ! -d "$TPM_DIR" && ! -f "$TMUX_DEST" ]]; then
+    echo "未安装，跳过: $TMUX_DEST"
+    exit 0
+fi
+
+if ! command -v git &>/dev/null; then
+    echo "错误: 缺少依赖 git"
+    exit 1
+fi
+
+if [[ -d "$TPM_DIR/.git" ]]; then
+    if [[ "$UPDATE" == "1" ]] && ! confirm_update "TPM 到最新"; then
+        echo "跳过 TPM 更新"
+    else
+        echo "更新 TPM: $TPM_DIR"
+        git -C "$TPM_DIR" remote set-url origin "$TPM_REPO"
+        git -C "$TPM_DIR" pull --ff-only
+    fi
+elif [[ "$UPDATE" == "1" ]]; then
+    echo "TPM 未安装，跳过"
+elif [[ ! -e "$TPM_DIR" ]]; then
+    echo "安装 TPM: $TPM_DIR"
+    git clone --depth 1 "$TPM_REPO" "$TPM_DIR"
 else
-    install_build_deps
+    echo "错误: TPM 目录已存在但不是 git 仓库: $TPM_DIR"
+    exit 1
 fi
 
-DOWNLOAD_URL="https://github.com/tmux/tmux/releases/download/${VERSION}/tmux-${VERSION}.tar.gz"
-if [[ "${CN:-}" == "1" ]]; then
-    DOWNLOAD_URL="${GITHUB_RELEASE_PROXY}${DOWNLOAD_URL}"
+if [[ "$UPDATE" == "1" && ! -e "$TMUX_DEST" ]]; then
+    echo "未安装，跳过: $TMUX_DEST"
+    exit 0
 fi
-SRC_DIR="${SRC_ROOT}/tmux-${VERSION}"
-TMP_DIR="$(mktemp -d)"
-TARBALL="${TMP_DIR}/tmux.tar.gz"
 
-trap 'rm -rf "$TMP_DIR"' EXIT
-
-mkdir -p "$BIN_DIR" "$SRC_ROOT"
-
-echo "下载 tmux ${VERSION}..."
-curl -fL "$DOWNLOAD_URL" -o "$TARBALL"
-
-echo "解压源码到: $SRC_DIR"
-rm -rf "$SRC_DIR"
-mkdir -p "$SRC_DIR"
-tar -xzf "$TARBALL" -C "$SRC_DIR" --strip-components=1
-
-cd "$SRC_DIR"
-
-echo "配置编译参数..."
-./configure --prefix="$INSTALL_DIR"
-
-echo "编译中..."
-make -j"$(make_jobs)"
-
-echo "安装到: $INSTALL_DIR"
-make install
-
-echo ""
-echo "tmux 安装完成: $TMUX_BIN"
-"$TMUX_BIN" -V
-echo "确保 $BIN_DIR 在 PATH 中"
+tmp_config="$(mktemp)"
+cp "$TMUX_SOURCE" "$tmp_config"
+write_file_if_changed "$TMUX_DEST" "$tmp_config"

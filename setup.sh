@@ -56,8 +56,7 @@ case "$MODE" in
             run "$ROOT/install/oh-my-bash.sh"
         fi
         run "$ROOT/install/compiler/node.sh"
-        run "$ROOT/install/pi-agent.sh"
-        run "$ROOT/install/pi-config.sh"
+        run "$ROOT/install/pi.sh"
         run python3 "$ROOT/install/pi-auth.py"
         run "$ROOT/install/uv.sh"
         run "$ROOT/install/compiler/python.sh"
@@ -90,7 +89,6 @@ case "$MODE" in
             exit 1
         fi
         run "$ROOT/install/nvim.sh"
-        run "$ROOT/install/nvim-config.sh"
         ;;
 esac
 

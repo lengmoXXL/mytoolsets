@@ -16,8 +16,7 @@ configs/
 │   ├── clashctl.sh
 │   ├── cmake.sh
 │   ├── codex.sh
-│   ├── doc-research.sh         # doc-research CLI（固定 commit，对比远端提示更新）
-│   ├── doc-research-init.sh
+│   ├── doc-research.sh         # doc-research CLI（固定 commit）+ doc-research-init
 │   ├── dsh-auth.py           # .credentials.yaml 写 provider refs（deepseek、qwen token plan）
 │   ├── dsh.sh                # DeepSeek Harness：CLI（npm 固定版本）+ 用户设置 + web profile 插件
 │   ├── fd.sh
@@ -27,23 +26,18 @@ configs/
 │   ├── ghostty-config.sh
 │   ├── ghostty-terminfo.sh
 │   ├── git-prune-merged.sh
-│   ├── herdr.sh
-│   ├── herdr-config.sh
-│   ├── kimi.sh
-│   ├── kimi-config.sh
-│   ├── nvim.sh
-│   ├── nvim-config.sh
+│   ├── herdr.sh               # Herdr + 配置（configs/herdr/config.toml）
+│   ├── kimi.sh                # Kimi Code CLI + 主题（configs/kimi/themes）
+│   ├── nvim.sh                # Neovim + 配置（configs/nvim）
 │   ├── nvim-ft.sh
 │   ├── oh-my-bash.sh           # Linux: Oh My Bash + ~/.bashrc（env.d 加载、PATH）
 │   ├── oh-my-zsh.sh            # macOS: Oh My Zsh + ~/.zshrc（env.d 加载、PATH）
 │   ├── opencode-auth.sh        # auth.json 合并式更新（sync: skip，手动执行）
-│   ├── opencode-config.sh
-│   ├── opencode.sh
+│   ├── opencode.sh            # opencode + 配置（~/.config/opencode/opencode.json）
 │   ├── ossutil.sh
 │   ├── perf-to-profile.sh
-│   ├── pi-agent.sh
+│   ├── pi.sh                  # Pi CLI（npm 固定版本）+ 配置与自研 extensions
 │   ├── pi-auth.py             # auth.json 合并式更新（sync: skip，手动执行）
-│   ├── pi-config.sh           # 配置 + 自研 extensions
 │   ├── pj.sh
 │   ├── playwright.sh
 │   ├── pnpm.sh                # pnpm（dsh plugin 管理 profile 依赖用，npm 固定版本）
@@ -51,8 +45,7 @@ configs/
 │   ├── ripgrep.sh
 │   ├── style-check.sh
 │   ├── tldr.sh
-│   ├── tmux.sh
-│   ├── tmux-config.sh
+│   ├── tmux.sh                # tmux + 配置（~/.tmux.conf、TPM）
 │   ├── tree-sitter.sh
 │   ├── uv.sh
 │   ├── compiler/               # 语言编译器/运行时
