@@ -259,31 +259,42 @@ else
     else
         # 仓库没发 release，也没有 lib/（gitignore），只能靠 prepare 构建；
         # pnpm 默认拦 build script：node-pty 用 --allow-build 放行，git 依赖的键是它解析出的完整
-        # spec（https codeload 还是 git+ssh 取决于本机 git 配置），所以失败时取它打印的那个键再重试
+        # spec（https codeload 还是 git+ssh 取决于本机 git 配置），所以失败时放行那个键再重试
         add_log="$(mktemp)"
         add_rc=0
         "$DSH_BIN" plugin --profile "$PROFILE" add --allow-build=node-pty "$git_spec" >"$add_log" 2>&1 || add_rc=$?
         cat "$add_log"
         if [[ "$add_rc" != "0" ]]; then
-            allow_key="$(sed -n 's/^  \(dsh-git@.*\): true$/\1/p' "$add_log" | head -1)"
+            # pnpm 换用 TTY 时会输出带缩进的框式提示，先去掉 ANSI 再按任意缩进取那个键
+            allow_key="$(sed $'s/\033\\[[0-9;]*[a-zA-Z]//g' "$add_log" \
+                | sed -n 's/^[[:space:]]*\(dsh-git@.*\):[[:space:]]*true[[:space:]]*$/\1/p' | head -1)"
             if [[ -z "$allow_key" ]]; then
-                rm -f "$add_log"
-                echo "错误: dsh-git 安装失败" >&2
-                exit 1
+                # 解析不出就把它可能解析成的两种 spec 都放行：题头的 codeload 与 ssh 直连
+                allow_key="dsh-git@https://codeload.github.com/${GIT_REPO}/tar.gz/${GIT_COMMIT}"
+                fallback_key="dsh-git@git+ssh://git@github.com/${GIT_REPO}.git#${GIT_COMMIT}"
+            else
+                fallback_key=""
             fi
-            echo "为 pnpm 放行 git 依赖的 prepare 构建: $allow_key"
-            allow_build="$PROFILE_DIR/pnpm-workspace.yaml"
-            if ! grep -qF "$allow_key" "$allow_build" 2>/dev/null; then
-                if grep -q '^allowBuilds:' "$allow_build" 2>/dev/null; then
-                    awk -v key="$allow_key" '{ print; if ($0 == "allowBuilds:") print "  " key ": true" }' \
+
+            for key in "$allow_key" "$fallback_key"; do
+                [[ -n "$key" ]] || continue
+                echo "为 pnpm 放行 git 依赖的 prepare 构建: $key"
+                allow_build="$PROFILE_DIR/pnpm-workspace.yaml"
+                grep -qF "$key" "$allow_build" 2>/dev/null && continue
+                if [[ -f "$allow_build" ]] && grep -q '^allowBuilds:' "$allow_build"; then
+                    awk -v key="$key" '{ print; if ($0 == "allowBuilds:") print "  " key ": true" }' \
                         "$allow_build" > "$allow_build.tmp"
                     mv "$allow_build.tmp" "$allow_build"
                 else
-                    printf '\nallowBuilds:\n  %s: true\n' "$allow_key" >> "$allow_build"
+                    printf '\nallowBuilds:\n  %s: true\n' "$key" >> "$allow_build"
                 fi
-            fi
+            done
             rm -f "$add_log"
-            "$DSH_BIN" plugin --profile "$PROFILE" add --allow-build=node-pty "$git_spec"
+            "$DSH_BIN" plugin --profile "$PROFILE" add --allow-build=node-pty "$git_spec" || {
+                echo "错误: dsh-git 仍未装成功；把下面这行加进 $PROFILE_DIR/pnpm-workspace.yaml 的 allowBuilds 后重跑：" >&2
+                echo "  ${allow_key}: true" >&2
+                exit 1
+            }
         else
             rm -f "$add_log"
         fi
