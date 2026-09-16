@@ -29,9 +29,9 @@ PATCH_FILE="$PROFILE_DIR/cordis.patch.yml"
 SETTINGS_FILE="$DSH_HOME_DIR/settings.yaml"
 TARBALL_DIR="${HOME}/.local/share/dsh-plugins/tarballs"
 RW_REPO="lengmoXXL/dsh-remote-workspace"
-RW_VERSION="0.1.5"
+RW_VERSION="0.1.9"
 GIT_REPO="lengmoXXL/dsh-git"
-GIT_COMMIT="8a39c366dcdff3455c2c65d6fa3bc6a72538d733"
+GIT_COMMIT="ef7c6aa232f5b6ebf32871b0ce9d44b6b519d528"
 GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 CURL_USER_AGENT="configs-install-dsh"
 
@@ -253,10 +253,35 @@ else
         echo "跳过: dsh-git"
     else
         # 仓库没发 release，也没有 lib/（gitignore），只能靠 prepare 构建；
-        # pnpm 默认拦 build script，allowBuilds 的键是 pnpm 打印的那个完整 spec
-        "$DSH_BIN" plugin --profile "$PROFILE" add \
-            "--allow-build=dsh-git@https://codeload.github.com/${GIT_REPO}/tar.gz/${GIT_COMMIT}" \
-            "$git_spec"
+        # pnpm 默认拦 build script：node-pty 用 --allow-build 放行，git 依赖的键是它解析出的完整
+        # spec（https codeload 还是 git+ssh 取决于本机 git 配置），所以失败时取它打印的那个键再重试
+        add_log="$(mktemp)"
+        add_rc=0
+        "$DSH_BIN" plugin --profile "$PROFILE" add --allow-build=node-pty "$git_spec" >"$add_log" 2>&1 || add_rc=$?
+        cat "$add_log"
+        if [[ "$add_rc" != "0" ]]; then
+            allow_key="$(sed -n 's/^  \(dsh-git@.*\): true$/\1/p' "$add_log" | head -1)"
+            if [[ -z "$allow_key" ]]; then
+                rm -f "$add_log"
+                echo "错误: dsh-git 安装失败" >&2
+                exit 1
+            fi
+            echo "为 pnpm 放行 git 依赖的 prepare 构建: $allow_key"
+            allow_build="$PROFILE_DIR/pnpm-workspace.yaml"
+            if ! grep -qF "$allow_key" "$allow_build" 2>/dev/null; then
+                if grep -q '^allowBuilds:' "$allow_build" 2>/dev/null; then
+                    awk -v key="$allow_key" '{ print; if ($0 == "allowBuilds:") print "  " key ": true" }' \
+                        "$allow_build" > "$allow_build.tmp"
+                    mv "$allow_build.tmp" "$allow_build"
+                else
+                    printf '\nallowBuilds:\n  %s: true\n' "$allow_key" >> "$allow_build"
+                fi
+            fi
+            rm -f "$add_log"
+            "$DSH_BIN" plugin --profile "$PROFILE" add --allow-build=node-pty "$git_spec"
+        else
+            rm -f "$add_log"
+        fi
         check_plugin_artifacts dsh-git
         echo "dsh-git ${GIT_COMMIT:0:12} 安装完成"
     fi

@@ -21,7 +21,9 @@ from pathlib import Path
 # dsh refs 段里的名字 -> .secrets/ai-providers.json 里的键
 REFS = {
     "DEEPSEEK_API_KEY": "deepseek",
+    "KIMI_API_KEY": "kimi",
     "QWEN_TOKEN_PLAN_CN_API_KEY": "qwen-token-plan-cn",
+    "ZAI_CODING_CN_API_KEY": "zai",
 }
 FILE_MODE = 0o600
 
