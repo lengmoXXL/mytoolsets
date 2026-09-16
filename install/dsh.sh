@@ -88,6 +88,11 @@ if [[ "$REMOVE" == "1" ]]; then
         done
     fi
     remove_file "$SETTINGS_FILE"
+    # 插件没了，profile patch 里为它停用的默认 provider 要还回去（只删我们写的块）
+    remove_managed_block "$PATCH_FILE" dsh-routers
+    if [[ -f "$PATCH_FILE" ]] && grep -q 'id: subprocess$' "$PATCH_FILE"; then
+        echo "提示: $PATCH_FILE 里仍有手写的停用行，插件已卸载，可能需要一并删掉"
+    fi
     remove_dir "$TARBALL_DIR"
     # 旧版按 clone + 本地构建安装的源码目录
     remove_dir "${HOME}/.local/share/dsh-plugins/dsh-git"
@@ -287,15 +292,36 @@ else
     fi
 fi
 
-# remote-workspace 要接管 ctx.fs / subprocess / shell / tty，而 host plane 每项服务只允许一个实现
-missing_ids=""
-for row in subprocess fs-sandbox bash-sandbox pwsh-sandbox; do
-    grep -q "id: ${row}$" "$PATCH_FILE" 2>/dev/null || missing_ids="${missing_ids} ${row}"
-done
-if [[ -n "$missing_ids" ]]; then
-    echo ""
-    echo "注意: $PATCH_FILE 缺少停用行:${missing_ids}"
-    echo "  缺了它们插件仍会加载，但不会接管路由（见 $RW_REPO 的 README）"
+# remote-workspace 要接管 ctx.fs / subprocess / shell / tty，而 host plane 每项服务只允许一个实现：
+# profile patch 层得停用默认 provider，否则插件会报 “this router is inert” 且不接管路由。
+# 只补缺的那些（块外手写过的算已有），避免同一 id 在同一个 patch 层里出现两次。
+if [[ -f "$PROFILE_DIR/node_modules/dsh-remote-workspace/package.json" ]]; then
+    patch_outside="$(mktemp)"
+    if [[ -f "$PATCH_FILE" ]]; then
+        awk -v begin="# BEGIN configs dsh-routers" -v end="# END configs dsh-routers" '
+            $0 == begin { in_block = 1; next }
+            $0 == end { in_block = 0; next }
+            !in_block { print }
+        ' "$PATCH_FILE" > "$patch_outside"
+    fi
+
+    block_ids=""
+    for id in subprocess fs-sandbox bash-sandbox pwsh-sandbox; do
+        grep -q "id: ${id}$" "$patch_outside" 2>/dev/null || block_ids="${block_ids} ${id}"
+    done
+    rm -f "$patch_outside"
+
+    if [[ -z "$block_ids" ]]; then
+        # 块外已经写全，managed block 就没必要留着
+        remove_managed_block "$PATCH_FILE" dsh-routers
+    else
+        block="$(mktemp)"
+        for id in $block_ids; do
+            printf -- "- id: %s\n  disabled: true\n" "$id" >> "$block"
+        done
+        write_managed_block "$PATCH_FILE" dsh-routers "$block"
+        rm -f "$block"
+    fi
 fi
 
 echo ""
