@@ -219,6 +219,55 @@ check_plugin_artifacts() {
     done
 }
 
+# remote-workspace 要接管 ctx.fs / subprocess / shell / tty，而 host plane 每项服务只允许一个实现：
+# profile patch 层得停用默认 provider，否则插件会报 “this router is inert” 且不接管路由。
+# 只补缺的那些（块外手写过的算已有），避免同一 id 在同一个 patch 层里出现两次。
+ensure_router_disables() {
+    [[ -f "$PROFILE_DIR/node_modules/dsh-remote-workspace/package.json" ]] || return 0
+
+    # dsh 初始化 profile 时会写一个空数组占位 []：留着它再往后追加，文件就变成两个 YAML 文档
+    # （end of the stream or a document separator is expected）。它本身不表达任何条目，删掉即可。
+    if [[ -f "$PATCH_FILE" ]] && grep -q '^[[:space:]]*\[\][[:space:]]*$' "$PATCH_FILE"; then
+        local placeholder_removed="$(mktemp)"
+        grep -v '^[[:space:]]*\[\][[:space:]]*$' "$PATCH_FILE" > "$placeholder_removed"
+        cat "$placeholder_removed" > "$PATCH_FILE"
+        rm -f "$placeholder_removed"
+        echo "已移除 $PATCH_FILE 里的空数组占位 []"
+    fi
+
+    local patch_outside block block_ids id
+    patch_outside="$(mktemp)"
+    if [[ -f "$PATCH_FILE" ]]; then
+        awk -v begin="# BEGIN configs dsh-routers" -v end="# END configs dsh-routers" '
+            $0 == begin { in_block = 1; next }
+            $0 == end { in_block = 0; next }
+            !in_block { print }
+        ' "$PATCH_FILE" > "$patch_outside"
+    fi
+
+    block_ids=""
+    for id in subprocess fs-sandbox bash-sandbox pwsh-sandbox; do
+        grep -q "id: ${id}$" "$patch_outside" 2>/dev/null || block_ids="${block_ids} ${id}"
+    done
+    rm -f "$patch_outside"
+
+    if [[ -z "$block_ids" ]]; then
+        # 块外已经写全，managed block 就没必要留着
+        remove_managed_block "$PATCH_FILE" dsh-routers
+        return 0
+    fi
+
+    block="$(mktemp)"
+    for id in $block_ids; do
+        printf -- "- id: %s\n  disabled: true\n" "$id" >> "$block"
+    done
+    write_managed_block "$PATCH_FILE" dsh-routers "$block"
+    rm -f "$block"
+}
+
+# 先补齐停用再动插件：插件已装好的机器上，任何后续步骤失败都不该让它停在“不接管路由”的状态
+ensure_router_disables
+
 rw_installed="$(plugin_version dsh-remote-workspace)"
 echo ""
 if [[ "$rw_installed" == "$RW_VERSION" ]]; then
@@ -303,37 +352,7 @@ else
     fi
 fi
 
-# remote-workspace 要接管 ctx.fs / subprocess / shell / tty，而 host plane 每项服务只允许一个实现：
-# profile patch 层得停用默认 provider，否则插件会报 “this router is inert” 且不接管路由。
-# 只补缺的那些（块外手写过的算已有），避免同一 id 在同一个 patch 层里出现两次。
-if [[ -f "$PROFILE_DIR/node_modules/dsh-remote-workspace/package.json" ]]; then
-    patch_outside="$(mktemp)"
-    if [[ -f "$PATCH_FILE" ]]; then
-        awk -v begin="# BEGIN configs dsh-routers" -v end="# END configs dsh-routers" '
-            $0 == begin { in_block = 1; next }
-            $0 == end { in_block = 0; next }
-            !in_block { print }
-        ' "$PATCH_FILE" > "$patch_outside"
-    fi
-
-    block_ids=""
-    for id in subprocess fs-sandbox bash-sandbox pwsh-sandbox; do
-        grep -q "id: ${id}$" "$patch_outside" 2>/dev/null || block_ids="${block_ids} ${id}"
-    done
-    rm -f "$patch_outside"
-
-    if [[ -z "$block_ids" ]]; then
-        # 块外已经写全，managed block 就没必要留着
-        remove_managed_block "$PATCH_FILE" dsh-routers
-    else
-        block="$(mktemp)"
-        for id in $block_ids; do
-            printf -- "- id: %s\n  disabled: true\n" "$id" >> "$block"
-        done
-        write_managed_block "$PATCH_FILE" dsh-routers "$block"
-        rm -f "$block"
-    fi
-fi
+ensure_router_disables
 
 echo ""
 echo "dsh 安装完成。重启 Web 服务生效: dsh web"
