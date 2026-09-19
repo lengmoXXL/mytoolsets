@@ -26,10 +26,10 @@ Confirm the review range before checking.
 
 ### Minimal Implementation
 
-For each part in the review range, decide whether it must exist and whether it can be part
-of another existing entity instead. A small amount of duplication is acceptable;
-flag helpers and abstractions that carry no meaningful abstraction of their own,
-even when they have multiple call sites.
+For each part in the review range, decide whether it must exist and whether it
+can be part of another existing entity instead. A small amount of duplication
+is acceptable; flag helpers and abstractions that carry no meaningful
+abstraction of their own, even when they have multiple call sites.
 
 #### Example: Single-Use Helper
 
@@ -222,8 +222,7 @@ unless they are clearly part of the user's requested behavior.
 
 Do not invent compatibility support from general caution, possible old data,
 existing consumers, platform differences, dependency versions, or unknown
-deployments. If the reviewed range contains compatibility logic, verify that the user asked
-for that compatibility before accepting it.
+deployments.
 
 #### Example: Unrequested Legacy Format
 
@@ -258,7 +257,7 @@ Flag any package that reaches past the API below into its implementation:
 building or picking apart a lower level's data representation, operating on its
 protocol or storage format, or performing a lower layer's job inline.
 
-#### Example: A Split That Creates Plumbing
+#### Example: Packages Split Along the Wrong Seam
 
 ```text
 internal/
@@ -301,7 +300,7 @@ operation, so it should be one package.
 ```text
 internal/
 ├── checkout/
-│   ├── checkout.go       # the checkout operation
+│   ├── checkout.go
 │   ├── payment.go        # Payment interface owned by the domain
 │   └── store.go          # Store interface owned by the domain
 ├── storage/
