@@ -245,80 +245,106 @@ storage format, or performs a lower layer's job inline. Read from the outermost
 entry points and follow the imports inward; at each package ask which level's
 concepts its API and its code are written in.
 
-Module design runs top-down: the requirements decide which packages exist, and
-a package's public API decides the implementation behind it. A package that
-reaches past the API of the layer below into its implementation detail is
-detached from the design above it, and every later change to that detail leaks
-through it.
+Module design runs top-down: the requirements decide which packages exist and
+where the boundaries between them fall, and a package's public API decides the
+implementation behind it. A package that reaches past the API of the layer
+below into its implementation detail is detached from the design above it, and
+every later change to that detail leaks through it.
+
+Flag boundaries the requirements do not justify. A split is wrong when one
+requirement's flow has to cross several packages to assemble its inputs and
+pass its results on, when packages drift into always changing together, or when
+a package holds only helpers, types, or constants that its callers must combine
+into a complete operation: the top-down division put a boundary inside one
+operation. A merge is wrong when packages with different requirements, callers,
+or axes of change are joined because they touch the same data or run at the
+same time. The test is the direction of the requirement, not the shape of the
+data: the operation the requirement names is one package, and a package below
+it exists only when it serves a requirement of its own, hides an external
+mechanism, or offers a seam a test can replace.
 
 Delegating to a lower level is not the violation; the higher level doing or
 duplicating that work itself is.
 
-#### Example: Storage Reached Through the Domain
+#### Example: A Split That Creates Plumbing
 
 ```text
 internal/
-├── admin/
-│   └── order.go          # admin API: reads and updates orders
 ├── order/
-│   ├── order.go          # order model and rules
-│   └── store.go          # Store interface; the domain's only persistence API
-└── storage/
-    └── mysql/
-        └── store.go      # Store implementation
+│   └── order.go          # Order and its rules
+├── cart/
+│   └── cart.go           # cart model and lookup
+├── pricing/
+│   └── pricing.go        # coupon, membership, and tax rules
+├── payment/
+│   └── payment.go        # charge calls to an external gateway
+└── httpapi/
+    └── checkout.go       # checkout endpoint
 ```
 
 ```go
-// internal/admin/order.go
-func UpdateAmount(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	amount, _ := strconv.Atoi(r.FormValue("amount"))
+// internal/httpapi/checkout.go
+func PlaceOrder(w http.ResponseWriter, r *http.Request) {
+	cart := cart.Load(r.FormValue("cart_id"))
+	items := cart.Items()
 
-	db, _ := sql.Open("mysql", dsn)
-	_, err := db.Exec("UPDATE orders SET amount = ? WHERE id = ?", amount, id)
+	subtotal := pricing.Subtotal(items)
+	subtotal -= pricing.Coupon(items, r.FormValue("coupon"))
+	total := pricing.Tax(subtotal)
+
+	charge, err := payment.Charge(r.FormValue("token"), total)
 	if err != nil {
-		http.Error(w, "update failed", http.StatusInternalServerError)
+		http.Error(w, "payment failed", http.StatusBadGateway)
 		return
 	}
-
-	row := db.QueryRow("SELECT status FROM orders WHERE id = ?", id)
-	var status string
-	if err := row.Scan(&status); err != nil {
-		http.Error(w, "read failed", http.StatusInternalServerError)
-		return
-	}
-	json.NewEncoder(w).Encode(map[string]string{"status": status})
+	order := order.New(items, total, charge.ID)
+	order.Save()
+	json.NewEncoder(w).Encode(order)
 }
 ```
 
-The admin package reaches through the domain into the storage layer: it opens
-the connection itself, writes the order, and picks its columns apart, so the
-persistence schema leaks up into the admin layer, which must now track every
-column it touches. Let the domain API be the only way in:
+The checkout flow passes from cart to pricing to payment to order, so the
+endpoint has to know all four packages' APIs and every intermediate value, and
+a change to any of them lands here. The split follows the nouns in the code
+instead of the requirement: checkout is one operation, so it is one package.
+Only the payment boundary is separate: an external service whose interface the
+domain owns and a test can replace.
+
+```text
+internal/
+├── checkout/
+│   ├── checkout.go       # the checkout requirement: load, price, pay, persist
+│   ├── payment.go        # Payment interface the domain depends on
+│   └── store.go          # Store interface the domain depends on
+├── storage/
+│   └── mysql/
+│       └── store.go      # Store implementation
+├── gateway/
+│   └── stripe/
+│       └── gateway.go    # Payment implementation
+└── httpapi/
+    └── checkout.go       # checkout endpoint
+```
 
 ```go
-// internal/order/store.go
-type Store interface {
-	UpdateAmount(ctx context.Context, id string, amount int) error
-	Status(ctx context.Context, id string) (string, error)
-}
-
-// internal/admin/order.go
-func UpdateAmount(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	amount, _ := strconv.Atoi(r.FormValue("amount"))
-	if err := store.UpdateAmount(ctx, id, amount); err != nil {
-		http.Error(w, "update failed", http.StatusInternalServerError)
-		return
-	}
-	status, err := store.Status(ctx, id)
+// internal/httpapi/checkout.go
+func PlaceOrder(w http.ResponseWriter, r *http.Request) {
+	order, err := checkout.Place(checkout.Request{
+		CartID: r.FormValue("cart_id"),
+		Coupon: r.FormValue("coupon"),
+		Token:  r.FormValue("token"),
+	})
 	if err != nil {
-		http.Error(w, "read failed", http.StatusInternalServerError)
+		http.Error(w, "checkout failed", http.StatusBadGateway)
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": status})
+	json.NewEncoder(w).Encode(order)
 }
 ```
+
+The rule inside the package is the domain's; the mechanisms behind the two
+interfaces live in their own packages; the endpoint names the requirement and
+nothing else.
 
 ### Unrequested Documentation
 
