@@ -1,6 +1,6 @@
 ---
 name: code-style
-description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, or unrequested documentation.
+description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, mixed abstraction levels, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, or unrequested documentation.
 ---
 
 # Code Style
@@ -236,6 +236,89 @@ if cfg.Endpoint == "" && cfg.LegacyURL != "" {
 If the requested behavior only uses `Endpoint`, the legacy field support is
 unnecessary unless the user asked to preserve old config files. Prefer removing
 the compatibility path.
+
+### Layers Keep Their Own Abstraction Level
+
+Flag packages that mix abstraction levels: a high-level package that builds or
+picks apart a lower level's data representation, operates on its protocol or
+storage format, or performs a lower layer's job inline. Read from the outermost
+entry points and follow the imports inward; at each package ask which level's
+concepts its API and its code are written in.
+
+Module design runs top-down: the requirements decide which packages exist, and
+a package's public API decides the implementation behind it. A package that
+reaches past the API of the layer below into its implementation detail is
+detached from the design above it, and every later change to that detail leaks
+through it.
+
+Delegating to a lower level is not the violation; the higher level doing or
+duplicating that work itself is.
+
+#### Example: Storage Reached Through the Domain
+
+```text
+internal/
+├── admin/
+│   └── order.go          # admin API: reads and updates orders
+├── order/
+│   ├── order.go          # order model and rules
+│   └── store.go          # Store interface; the domain's only persistence API
+└── storage/
+    └── mysql/
+        └── store.go      # Store implementation
+```
+
+```go
+// internal/admin/order.go
+func UpdateAmount(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	amount, _ := strconv.Atoi(r.FormValue("amount"))
+
+	db, _ := sql.Open("mysql", dsn)
+	_, err := db.Exec("UPDATE orders SET amount = ? WHERE id = ?", amount, id)
+	if err != nil {
+		http.Error(w, "update failed", http.StatusInternalServerError)
+		return
+	}
+
+	row := db.QueryRow("SELECT status FROM orders WHERE id = ?", id)
+	var status string
+	if err := row.Scan(&status); err != nil {
+		http.Error(w, "read failed", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"status": status})
+}
+```
+
+The admin package reaches through the domain into the storage layer: it opens
+the connection itself, writes the order, and picks its columns apart, so the
+persistence schema leaks up into the admin layer, which must now track every
+column it touches. Let the domain API be the only way in:
+
+```go
+// internal/order/store.go
+type Store interface {
+	UpdateAmount(ctx context.Context, id string, amount int) error
+	Status(ctx context.Context, id string) (string, error)
+}
+
+// internal/admin/order.go
+func UpdateAmount(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	amount, _ := strconv.Atoi(r.FormValue("amount"))
+	if err := store.UpdateAmount(ctx, id, amount); err != nil {
+		http.Error(w, "update failed", http.StatusInternalServerError)
+		return
+	}
+	status, err := store.Status(ctx, id)
+	if err != nil {
+		http.Error(w, "read failed", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"status": status})
+}
+```
 
 ### Unrequested Documentation
 
