@@ -239,32 +239,24 @@ the compatibility path.
 
 ### Layers Keep Their Own Abstraction Level
 
-Flag packages that mix abstraction levels: a high-level package that builds or
-picks apart a lower level's data representation, operates on its protocol or
-storage format, or performs a lower layer's job inline. Read from the outermost
-entry points and follow the imports inward; at each package ask which level's
-concepts its API and its code are written in.
-
-Module design runs top-down: the requirements decide which packages exist and
-where the boundaries between them fall, and a package's public API decides the
-implementation behind it. A package that reaches past the API of the layer
-below into its implementation detail is detached from the design above it, and
-every later change to that detail leaks through it.
+Module design runs top-down: the requirements decide which operations exist,
+each operation is one package, and a package's public API decides the
+implementation behind it. Read from the outermost entry points and follow the
+imports inward; a package may reach only the API of the layer directly below
+it, and its code must be written in its own level's concepts.
 
 Flag boundaries the requirements do not justify. A split is wrong when one
-requirement's flow has to cross several packages to assemble its inputs and
-pass its results on, when packages drift into always changing together, or when
-a package holds only helpers, types, or constants that its callers must combine
-into a complete operation: the top-down division put a boundary inside one
-operation. A merge is wrong when packages with different requirements, callers,
-or axes of change are joined because they touch the same data or run at the
-same time. The test is the direction of the requirement, not the shape of the
-data: the operation the requirement names is one package, and a package below
-it exists only when it serves a requirement of its own, hides an external
-mechanism, or offers a seam a test can replace.
+operation's flow crosses several packages whose callers must thread state
+between them, when packages only change together, or when a package holds just
+helpers or types that callers must combine into a complete operation. A merge
+is wrong when it joins packages with different requirements, callers, or axes
+of change because they touch the same data. The requirement is the test: an
+operation is one package, and a package below it exists only when it serves a
+requirement of its own or hides an external mechanism a test can replace.
 
-Delegating to a lower level is not the violation; the higher level doing or
-duplicating that work itself is.
+Flag any package that reaches past the API below into its implementation:
+building or picking apart a lower level's data representation, operating on its
+protocol or storage format, or performing a lower layer's job inline.
 
 #### Example: A Split That Creates Plumbing
 
@@ -286,10 +278,9 @@ internal/
 // internal/httpapi/checkout.go
 func PlaceOrder(w http.ResponseWriter, r *http.Request) {
 	cart := cart.Load(r.FormValue("cart_id"))
-	items := cart.Items()
 
-	subtotal := pricing.Subtotal(items)
-	subtotal -= pricing.Coupon(items, r.FormValue("coupon"))
+	subtotal := pricing.Subtotal(cart.Items())
+	subtotal -= pricing.Coupon(cart.Items(), r.FormValue("coupon"))
 	total := pricing.Tax(subtotal)
 
 	charge, err := payment.Charge(r.FormValue("token"), total)
@@ -297,31 +288,28 @@ func PlaceOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "payment failed", http.StatusBadGateway)
 		return
 	}
-	order := order.New(items, total, charge.ID)
+	order := order.New(cart.Items(), total, charge.ID)
 	order.Save()
 	json.NewEncoder(w).Encode(order)
 }
 ```
 
-The checkout flow passes from cart to pricing to payment to order, so the
-endpoint has to know all four packages' APIs and every intermediate value, and
-a change to any of them lands here. The split follows the nouns in the code
-instead of the requirement: checkout is one operation, so it is one package.
-Only the payment boundary is separate: an external service whose interface the
-domain owns and a test can replace.
+The split follows the nouns in the code: the endpoint knows all four packages'
+APIs and threads every intermediate value between them. Checkout is one
+operation, so it should be one package.
 
 ```text
 internal/
 ├── checkout/
-│   ├── checkout.go       # the checkout requirement: load, price, pay, persist
-│   ├── payment.go        # Payment interface the domain depends on
-│   └── store.go          # Store interface the domain depends on
+│   ├── checkout.go       # the checkout operation
+│   ├── payment.go        # Payment interface owned by the domain
+│   └── store.go          # Store interface owned by the domain
 ├── storage/
 │   └── mysql/
-│       └── store.go      # Store implementation
+│       └── store.go
 ├── gateway/
 │   └── stripe/
-│       └── gateway.go    # Payment implementation
+│       └── gateway.go
 └── httpapi/
     └── checkout.go       # checkout endpoint
 ```
@@ -341,10 +329,6 @@ func PlaceOrder(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(order)
 }
 ```
-
-The rule inside the package is the domain's; the mechanisms behind the two
-interfaces live in their own packages; the endpoint names the requirement and
-nothing else.
 
 ### Unrequested Documentation
 
