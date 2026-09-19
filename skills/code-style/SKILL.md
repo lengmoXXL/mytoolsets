@@ -246,8 +246,8 @@ it, and its code must be written in its own level's concepts.
 
 Flag boundaries the requirements do not justify. A split is wrong when one
 operation's flow crosses several packages whose callers must thread state
-between them, when packages only change together, or when a package holds just
-helpers or types that callers must combine into a complete operation. A merge
+between them, when packages only change together, or when a package holds only
+types or helpers that callers must combine into a complete operation. A merge
 is wrong when it joins packages with different requirements, callers, or axes
 of change because they touch the same data. The requirement is the test: an
 operation is one package, and a package below it exists only when it serves a
@@ -257,7 +257,7 @@ Flag any package that reaches past the API below into its implementation:
 building or picking apart a lower level's data representation, operating on its
 protocol or storage format, or performing a lower layer's job inline.
 
-#### Example: Packages Split Along the Wrong Seam
+#### Example: A Split the Requirement Does Not Justify
 
 ```text
 internal/
