@@ -257,7 +257,7 @@ Flag any package that reaches past the API below into its implementation:
 building or picking apart a lower level's data representation, operating on its
 protocol or storage format, or performing a lower layer's job inline.
 
-#### Example: A Split the Requirement Does Not Justify
+#### Example: A Split the Requirement Decides Against
 
 ```text
 internal/
@@ -328,6 +328,9 @@ func PlaceOrder(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(order)
 }
 ```
+
+The rule inside checkout is the domain's; storage and gateway stay split off
+because each hides a mechanism a test can replace.
 
 ### Unrequested Documentation
 
