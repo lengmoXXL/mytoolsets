@@ -85,8 +85,10 @@ if [[ "$REMOVE" == "1" ]]; then
         done
     fi
     remove_file "$SETTINGS_FILE"
-    # 插件没了，profile patch 里为它停用的默认 provider 要还回去（只删我们写的块）
-    remove_managed_block "$PATCH_FILE" dsh-routers
+    # 插件没了，profile patch 里为它停用的行要还回去（只删我们写的块）
+    for block_name in dsh-routers dsh-terminal; do
+        remove_managed_block "$PATCH_FILE" "$block_name"
+    done
     if [[ -f "$PATCH_FILE" ]] && grep -q 'id: subprocess$' "$PATCH_FILE"; then
         echo "提示: $PATCH_FILE 里仍有手写的停用行，插件已卸载，可能需要一并删掉"
     fi
