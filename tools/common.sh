@@ -156,8 +156,9 @@ remove_managed_block() {
     local name="$2"
     local begin_marker="# BEGIN configs $name"
     local end_marker="# END configs $name"
-    [[ -f "$file" ]] || return
-    grep -qF "$begin_marker" "$file" || return
+    # 没有文件或没有这个块都是正常的“无需删除”，返回 0 而不是上一条命令的失败状态
+    [[ -f "$file" ]] || return 0
+    grep -qF "$begin_marker" "$file" || return 0
     local tmp_file
     tmp_file="$(mktemp)"
     awk -v begin="$begin_marker" -v end="$end_marker" '
