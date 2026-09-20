@@ -15,11 +15,12 @@ Packages:
   GitHub release  ripgrep(rg) fzf fd cmake tmux nvim uv codex opencode herdr
                   lua-lsp starpls typos-lsp(typos) rust sarasa aurulent droid
   npm             pi-agent(pi) pnpm playwright typescript-lsp bash-lsp pyright
+                  dsh-git dsh-remote-workspace
   npm next        dsh
   PyPI            tldr
   crates.io       tree-sitter
   其他            go gopls node zig kimi
-  git commit      doc-research neovim-skill markdown-oxide dsh-git dsh-remote-workspace
+  git commit      doc-research neovim-skill markdown-oxide
 EOF
 }
 
@@ -60,8 +61,8 @@ entry() {
         doc-research) echo "commit https://github.com/lengmoXXL/doc-research.git" ;;
         neovim-skill) echo "commit https://github.com/lengmoXXL/neovim-skill.git" ;;
         markdown-oxide) echo "commit https://github.com/lengmoXXL/markdown-oxide.git" ;;
-        dsh-git) echo "commit https://github.com/lengmoXXL/dsh-git.git" ;;
-        dsh-remote-workspace) echo "commit https://github.com/lengmoXXL/dsh-remote-workspace.git" ;;
+        dsh-git) echo "npm @lengmoxxl/dsh-git" ;;
+        dsh-remote-workspace) echo "npm @lengmoxxl/dsh-remote-workspace" ;;
         */*) echo "gh $1" ;;
         *) return 1 ;;
     esac

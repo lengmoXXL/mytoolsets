@@ -1,7 +1,7 @@
 #!/bin/bash
-# 安装/更新 DeepSeek Harness：CLI（npm 固定版本）+ 用户设置 + web profile 插件
-# 固定版本写在 DSH_VERSION / RW_VERSION / GIT_COMMIT；升级前用 tools/latest-version.sh 查上游
-# 插件装法：remote-workspace 下载 release tarball（自带 lib/），dsh-git 用 github 依赖（靠 prepare 构建）
+# 安装/更新 DeepSeek Harness：CLI（npm 固定版本）+ 用户设置 + web profile 插件（npm 固定版本）
+# 固定版本写在 DSH_VERSION / RW_VERSION / GIT_VERSION；升级前用 tools/latest-version.sh 查上游
+# 插件都从 npm 装（发布包里带 lib/），不再下载 GitHub release，也不在本地构建
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
@@ -27,13 +27,10 @@ PROFILE_DIR="$DSH_HOME_DIR/profiles/$PROFILE"
 MANIFEST="$PROFILE_DIR/package.json"
 PATCH_FILE="$PROFILE_DIR/cordis.patch.yml"
 SETTINGS_FILE="$DSH_HOME_DIR/settings.yaml"
-TARBALL_DIR="${HOME}/.local/share/dsh-plugins/tarballs"
-RW_REPO="lengmoXXL/dsh-remote-workspace"
-RW_VERSION="0.1.11"
-GIT_REPO="lengmoXXL/dsh-git"
-GIT_COMMIT="62badff5d97827d5d6a4db8e04b7c4e0332e6707"
-GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
-CURL_USER_AGENT="configs-install-dsh"
+RW_PACKAGE="@lengmoxxl/dsh-remote-workspace"
+RW_VERSION="0.1.12"
+GIT_PACKAGE="@lengmoxxl/dsh-git"
+GIT_VERSION="0.2.1"
 
 usage() {
     cat << EOF
@@ -45,7 +42,7 @@ usage() {
   --update        更新已安装的部分（未安装则跳过）
 
 环境变量:
-  CN=1          使用 npmmirror registry，并经国内代理下载 GitHub release
+  CN=1          使用 npmmirror registry
   DSH_HOME      dsh 数据目录，默认 ~/.dsh
 EOF
 }
@@ -83,7 +80,7 @@ done
 if [[ "$REMOVE" == "1" ]]; then
     confirm_remove "dsh（CLI + 用户设置 + 插件）" || exit 0
     if [[ -x "$DSH_BIN" ]]; then
-        for plugin in dsh-remote-workspace dsh-git; do
+        for plugin in "$RW_PACKAGE" "$GIT_PACKAGE" dsh-remote-workspace dsh-git; do
             "$DSH_BIN" plugin --profile "$PROFILE" remove "$plugin" || true
         done
     fi
@@ -93,7 +90,7 @@ if [[ "$REMOVE" == "1" ]]; then
     if [[ -f "$PATCH_FILE" ]] && grep -q 'id: subprocess$' "$PATCH_FILE"; then
         echo "提示: $PATCH_FILE 里仍有手写的停用行，插件已卸载，可能需要一并删掉"
     fi
-    remove_dir "$TARBALL_DIR"
+    remove_dir "${HOME}/.local/share/dsh-plugins/tarballs"   # 旧版 release 下载缓存
     # 旧版按 clone + 本地构建安装的源码目录
     remove_dir "${HOME}/.local/share/dsh-plugins/dsh-git"
     remove_dir "${HOME}/.local/share/dsh-plugins/dsh-remote-workspace"
@@ -127,15 +124,10 @@ if ! node_ready; then
     exit 1
 fi
 
-for dep in pnpm curl git; do
-    if ! command -v "$dep" &>/dev/null; then
-        case "$dep" in
-            pnpm) echo "错误: 缺少 pnpm（dsh plugin 用它管理 profile 依赖），请先运行 $SCRIPT_DIR/pnpm.sh" >&2 ;;
-            *) echo "错误: 缺少依赖 $dep" >&2 ;;
-        esac
-        exit 1
-    fi
-done
+if ! command -v pnpm &>/dev/null; then
+    echo "错误: 缺少 pnpm（dsh plugin 用它管理 profile 依赖），请先运行 $SCRIPT_DIR/pnpm.sh" >&2
+    exit 1
+fi
 
 # ---- dsh CLI ----
 
@@ -223,7 +215,7 @@ check_plugin_artifacts() {
 # profile patch 层得停用默认 provider，否则插件会报 “this router is inert” 且不接管路由。
 # 只补缺的那些（块外手写过的算已有），避免同一 id 在同一个 patch 层里出现两次。
 ensure_router_disables() {
-    [[ -f "$PROFILE_DIR/node_modules/dsh-remote-workspace/package.json" ]] || return 0
+    [[ -f "$PROFILE_DIR/node_modules/$RW_PACKAGE/package.json" ]] || return 0
 
     # dsh 初始化 profile 时会写一个空数组占位 []：留着它再往后追加，文件就变成两个 YAML 文档
     # （end of the stream or a document separator is expected）。它本身不表达任何条目，删掉即可。
@@ -298,91 +290,84 @@ migrate_legacy_install() {
 
 migrate_legacy_install
 
-rw_installed="$(plugin_version dsh-remote-workspace)"
-echo ""
-if [[ "$rw_installed" == "$RW_VERSION" ]]; then
-    echo "dsh-remote-workspace ${RW_VERSION} 已安装"
-elif [[ "$UPDATE" == "1" && -z "$rw_installed" ]]; then
-    echo "未安装，跳过: dsh-remote-workspace"
-else
-    if [[ -n "$rw_installed" ]] &&
-        ! confirm_update "dsh-remote-workspace: ${rw_installed} -> ${RW_VERSION}"; then
-        echo "跳过: dsh-remote-workspace"
-    else
-        rw_url="https://github.com/${RW_REPO}/releases/download/plugin-v${RW_VERSION}/dsh-remote-workspace-${RW_VERSION}.tgz"
-        if [[ "${CN:-}" == "1" ]]; then
-            rw_url="${GITHUB_PROXY_PREFIX}${rw_url}"
-        fi
-        rw_tarball="$TARBALL_DIR/dsh-remote-workspace-${RW_VERSION}.tgz"
+add_plugin() {
+    local package="$1" version="$2" allow_build="${3:-}"
+    local args=(plugin --profile "$PROFILE" add --save-exact)
+    [[ -n "$allow_build" ]] && args+=(--allow-build="$allow_build")
+    [[ -n "$NPM_REGISTRY" ]] && args+=(--registry "$NPM_REGISTRY")
+    "$DSH_BIN" "${args[@]}" "${package}@${version}"
+}
 
-        mkdir -p "$TARBALL_DIR"
-        echo "下载 dsh-remote-workspace ${RW_VERSION}..."
-        curl -fL -H "User-Agent: ${CURL_USER_AGENT}" "$rw_url" -o "$rw_tarball"
+# dep_spec <依赖键>: profile manifest 里该依赖的版本 spec
+dep_spec() {
+    [[ -n "$1" && -f "$MANIFEST" ]] || return 0
+    node -p "require('$MANIFEST').dependencies?.['$1'] ?? ''" 2>/dev/null || true
+}
 
-        # 用本地 tgz：直接给 URL 会撞 pnpm 的 ERR_PNPM_MISSING_TARBALL_INTEGRITY
-        "$DSH_BIN" plugin --profile "$PROFILE" add --allow-build=node-pty "$rw_tarball"
-        check_plugin_artifacts dsh-remote-workspace
-        echo "dsh-remote-workspace ${RW_VERSION} 安装完成"
-    fi
-fi
+# install_plugin <package> <version> [allow-build 包名] [旧依赖键]
+# 旧依赖键指无 scope 的 dsh-git / dsh-remote-workspace：它们各自也进 bundles，
+# 不先清掉就换 npm 包名，同一个 patch 会挂两次。
+install_plugin() {
+    local package="$1" version="$2" allow_build="${3:-}" legacy_key="${4:-}"
+    local installed legacy_spec
 
-git_spec="github:${GIT_REPO}#${GIT_COMMIT}"
-if [[ -f "$MANIFEST" ]] && grep -q "#${GIT_COMMIT}\"" "$MANIFEST"; then
-    echo "dsh-git ${GIT_COMMIT:0:12} 已安装"
-elif [[ "$UPDATE" == "1" && ! -f "$PROFILE_DIR/node_modules/dsh-git/package.json" ]]; then
-    echo "未安装，跳过: dsh-git"
-else
-    if [[ -f "$PROFILE_DIR/node_modules/dsh-git/package.json" ]] &&
-        ! confirm_update "dsh-git -> ${GIT_COMMIT:0:12}"; then
-        echo "跳过: dsh-git"
-    else
-        # 仓库没发 release，也没有 lib/（gitignore），只能靠 prepare 构建；
-        # pnpm 默认拦 build script：node-pty 用 --allow-build 放行，git 依赖的键是它解析出的完整
-        # spec（https codeload 还是 git+ssh 取决于本机 git 配置），所以失败时放行那个键再重试
-        add_log="$(mktemp)"
-        add_rc=0
-        "$DSH_BIN" plugin --profile "$PROFILE" add --allow-build=node-pty "$git_spec" >"$add_log" 2>&1 || add_rc=$?
-        cat "$add_log"
-        if [[ "$add_rc" != "0" ]]; then
-            # pnpm 换用 TTY 时会输出带缩进的框式提示，先去掉 ANSI 再按任意缩进取那个键
-            allow_key="$(sed $'s/\033\\[[0-9;]*[a-zA-Z]//g' "$add_log" \
-                | sed -n 's/^[[:space:]]*\(dsh-git@.*\):[[:space:]]*true[[:space:]]*$/\1/p' | head -1)"
-            if [[ -z "$allow_key" ]]; then
-                # 解析不出就把它可能解析成的两种 spec 都放行：题头的 codeload 与 ssh 直连
-                allow_key="dsh-git@https://codeload.github.com/${GIT_REPO}/tar.gz/${GIT_COMMIT}"
-                fallback_key="dsh-git@git+ssh://git@github.com/${GIT_REPO}.git#${GIT_COMMIT}"
-            else
-                fallback_key=""
+    case "$(dep_spec "$package")" in
+        link:* | file:*)
+            echo "跳过: ${package}（profile 里是本地安装，开发用）"
+            return 0
+            ;;
+    esac
+    # 旧键指向 release 缓存 tarball 的是旧版安装，要迁移；指向别处的本地安装不动
+    legacy_spec="$(dep_spec "$legacy_key")"
+    case "$legacy_spec" in
+        link:*)
+            echo "跳过: ${package}（profile 里是本地安装，开发用）"
+            return 0
+            ;;
+        file:*)
+            if [[ "$legacy_spec" != "file:${HOME}/.local/share/dsh-plugins/tarballs/"* ]]; then
+                echo "跳过: ${package}（profile 里是本地安装，开发用）"
+                return 0
             fi
+            ;;
+    esac
 
-            for key in "$allow_key" "$fallback_key"; do
-                [[ -n "$key" ]] || continue
-                echo "为 pnpm 放行 git 依赖的 prepare 构建: $key"
-                allow_build="$PROFILE_DIR/pnpm-workspace.yaml"
-                grep -qF "$key" "$allow_build" 2>/dev/null && continue
-                if [[ -f "$allow_build" ]] && grep -q '^allowBuilds:' "$allow_build"; then
-                    awk -v key="$key" '{ print; if ($0 == "allowBuilds:") print "  " key ": true" }' \
-                        "$allow_build" > "$allow_build.tmp"
-                    mv "$allow_build.tmp" "$allow_build"
-                else
-                    printf '\nallowBuilds:\n  %s: true\n' "$key" >> "$allow_build"
-                fi
-            done
-            rm -f "$add_log"
-            "$DSH_BIN" plugin --profile "$PROFILE" add --allow-build=node-pty "$git_spec" || {
-                echo "错误: dsh-git 仍未装成功；把下面这行加进 $PROFILE_DIR/pnpm-workspace.yaml 的 allowBuilds 后重跑：" >&2
-                echo "  ${allow_key}: true" >&2
-                exit 1
-            }
-        else
-            rm -f "$add_log"
-        fi
-        check_plugin_artifacts dsh-git
-        echo "dsh-git ${GIT_COMMIT:0:12} 安装完成"
+    installed="$(plugin_version "$package")"
+    if [[ -z "$installed" && -n "$legacy_key" ]]; then
+        installed="$(plugin_version "$legacy_key")"
     fi
-fi
 
-ensure_router_disables
+    if [[ -n "$legacy_spec" ]]; then
+        echo "${package} 由旧依赖键 ${legacy_key}（${legacy_spec}）安装，改用 npm 包"
+        if ! confirm_update "${package}: 迁移到 npm 包（当前 ${installed:-unknown}）"; then
+            echo "跳过: ${package}"
+            return 0
+        fi
+    elif [[ "$installed" == "$version" ]]; then
+        echo "${package} ${version} 已安装"
+        return 0
+    elif [[ "$UPDATE" == "1" && -z "$installed" ]]; then
+        echo "未安装，跳过: ${package}"
+        return 0
+    elif [[ -n "$installed" ]] &&
+        ! confirm_update "${package}: ${installed} -> ${version}"; then
+        echo "跳过: ${package}"
+        return 0
+    fi
+
+    if [[ -n "$legacy_spec" ]]; then
+        "$DSH_BIN" plugin --profile "$PROFILE" remove "$legacy_key" || true
+    fi
+
+    echo "安装 ${package} ${version}..."
+    add_plugin "$package" "$version" "$allow_build"
+    check_plugin_artifacts "$package"
+    echo "${package} ${version} 安装完成"
+}
+
+echo ""
+install_plugin "$RW_PACKAGE" "$RW_VERSION" node-pty dsh-remote-workspace
+install_plugin "$GIT_PACKAGE" "$GIT_VERSION" "" dsh-git
 
 echo ""
 echo "dsh 安装完成。重启 Web 服务生效: dsh web"
