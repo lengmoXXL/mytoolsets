@@ -385,6 +385,8 @@ echo ""
 install_plugin "$RW_PACKAGE" "$RW_VERSION" node-pty dsh-remote-workspace
 install_plugin "$GIT_PACKAGE" "$GIT_VERSION" "" dsh-git
 
+# 全新安装时插件是上面几步才装上的，早先那次调用会因为“插件未装”直接返回，这里补一次
+ensure_router_disables
 echo ""
 echo "dsh 安装完成。重启 Web 服务生效: dsh web"
 echo "提示: provider 密钥引用由 install/dsh-auth.py 写入 $DSH_HOME_DIR/.credentials.yaml"
