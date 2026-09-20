@@ -143,6 +143,21 @@ what it does. The same applies to doc comments that merely repeat the signature:
 func GetUserByID(id string) (*User, error) {
 ```
 
+#### Example: Announcing What the Code Does Not Do
+
+```go
+func notify(order Order) error {
+	// No fallback to SMS: the admin decided against it.
+	return email.Send(order.Email, order.Total)
+}
+```
+
+The comment is 此地无银三百两: by announcing that the fallback is not there,
+it makes the reader wonder why one should be. If it should not exist, the
+cleanest code is the code that does not do it. A comment earns its place only
+by giving the reason the code cannot, and only when that reason matters and is
+not obvious.
+
 ### Over-Defensive Guards
 
 Flag checks that only protect against caller misuse or impossible
