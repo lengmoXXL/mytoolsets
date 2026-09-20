@@ -1,7 +1,7 @@
 #!/bin/bash
 # 安装/更新 DeepSeek Harness：CLI（npm 固定版本）+ 用户设置 + web profile 插件（npm 固定版本）
 # 固定版本写在 DSH_VERSION / RW_VERSION / GIT_VERSION；升级前用 tools/latest-version.sh 查上游
-# 插件都从 npm 装（发布包里带 lib/），不再下载 GitHub release，也不在本地构建
+# 插件都从 npm 装（发布包里带 lib/）
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
@@ -37,7 +37,7 @@ usage() {
 用法: $0 [--registry URL] [--remove] [--update]
 
 选项:
-  --registry URL  使用指定 npm registry 安装 dsh CLI
+  --registry URL  安装 dsh CLI 与插件时使用的 npm registry
   --remove        卸载 dsh（CLI、用户设置与插件）
   --update        更新已安装的部分（未安装则跳过）
 
@@ -80,7 +80,7 @@ done
 if [[ "$REMOVE" == "1" ]]; then
     confirm_remove "dsh（CLI + 用户设置 + 插件）" || exit 0
     if [[ -x "$DSH_BIN" ]]; then
-        for plugin in "$RW_PACKAGE" "$GIT_PACKAGE" dsh-remote-workspace dsh-git; do
+        for plugin in "$RW_PACKAGE" "$GIT_PACKAGE"; do
             "$DSH_BIN" plugin --profile "$PROFILE" remove "$plugin" || true
         done
     fi
@@ -92,11 +92,6 @@ if [[ "$REMOVE" == "1" ]]; then
     if [[ -f "$PATCH_FILE" ]] && grep -q 'id: subprocess$' "$PATCH_FILE"; then
         echo "提示: $PATCH_FILE 里仍有手写的停用行，插件已卸载，可能需要一并删掉"
     fi
-    remove_dir "${HOME}/.local/share/dsh-plugins/tarballs"   # 旧版 release 下载缓存
-    # 旧版按 clone + 本地构建安装的源码目录
-    remove_dir "${HOME}/.local/share/dsh-plugins/dsh-git"
-    remove_dir "${HOME}/.local/share/dsh-plugins/dsh-remote-workspace"
-    rmdir "${HOME}/.local/share/dsh-plugins" 2>/dev/null || true
     if command -v npm &>/dev/null; then
         npm uninstall -g --prefix "$NPM_PREFIX" "$DSH_PACKAGE"
     else
@@ -114,9 +109,11 @@ node_ready() {
     command -v node &>/dev/null &&
         command -v npm &>/dev/null &&
         node -e '
-            const [major, minor, patch] = process.versions.node.split(".").map(Number);
-            process.exit(major > 22 || (major === 22 && (minor > 19 || (minor === 19 && patch >= 0))) ? 0 : 1);
-        ' &>/dev/null
+            const need = process.argv[1].split(".").map(Number);
+            const have = process.versions.node.split(".").map(Number);
+            process.exit(have[0] > need[0] ||
+                (have[0] === need[0] && (have[1] > need[1] || (have[1] === need[1] && have[2] >= need[2]))) ? 0 : 1);
+        ' "$MIN_NODE_VERSION" &>/dev/null
 }
 
 if ! node_ready; then
@@ -195,24 +192,6 @@ fi
 
 # ---- 插件 ----
 
-plugin_version() {
-    local name="$1"
-    local manifest="$PROFILE_DIR/node_modules/$name/package.json"
-    [[ -f "$manifest" ]] || return 0
-    node -p "require('$manifest').version" 2>/dev/null || true
-}
-
-check_plugin_artifacts() {
-    local name="$1"
-    local dir="$PROFILE_DIR/node_modules/$name"
-    for artifact in lib/index.js lib/client.js; do
-        if [[ ! -f "$dir/$artifact" ]]; then
-            echo "错误: 插件产物缺失 $dir/$artifact" >&2
-            exit 1
-        fi
-    done
-}
-
 # 在 profile patch 层里停用若干行，写进一个受管块：
 #   1) remote-workspace 要接管 ctx.fs / subprocess / shell / tty，而 host plane 每项服务只允许一个实现，
 #      不停用默认 provider 时插件会报 “this router is inert” 且不接管路由；
@@ -252,7 +231,7 @@ ensure_patch_entries() {
     rm -f "$entry_block"
 }
 
-ensure_router_disables() {
+ensure_disabled_entries() {
     [[ -f "$PROFILE_DIR/node_modules/$RW_PACKAGE/package.json" ]] || return 0
 
     # dsh 初始化 profile 时会写一个空数组占位 []：留着它再往后追加，文件就变成两个 YAML 文档
@@ -274,119 +253,57 @@ ensure_router_disables() {
 }
 
 # 先补齐停用再动插件：插件已装好的机器上，任何后续步骤失败都不该让它停在“不接管路由”的状态
-ensure_router_disables
+ensure_disabled_entries
 
-# 旧版把 terminal 当独立包（仓库是 packages/ 多包布局）并在 profile 里 link 它；新版并回主包，
-# 两边都会注册 /dsh-terminal/ws，同一条升级路由挂两次会让 boot 直接失败。清掉旧依赖与旧 clone 目录。
-migrate_legacy_install() {
-    local legacy dir stale
-
-    if [[ -f "$MANIFEST" ]] && grep -q '"dsh-terminal"' "$MANIFEST"; then
-        echo "旧布局的 dsh-terminal 已并入 dsh-remote-workspace，从 profile 移除…"
-        "$DSH_BIN" plugin --profile "$PROFILE" remove dsh-terminal || true
-    fi
-
-    for legacy in dsh-git dsh-remote-workspace; do
-        dir="${HOME}/.local/share/dsh-plugins/$legacy"
-        [[ -d "$dir" ]] || continue
-        # profile 还 link 着它就别动（开发时用 link: 指过来的情况）
-        if [[ -f "$MANIFEST" ]] && grep -q "dsh-plugins/$legacy" "$MANIFEST"; then
-            continue
-        fi
-        remove_dir "$dir"
-    done
-
-    # pnpm 卸载后会留下悬空的符号链接，清掉（还能解析到目标的不动）
-    for stale in dsh-terminal dsh-tty dsh-tty-local dsh-tty-remote; do
-        [[ -L "$PROFILE_DIR/node_modules/$stale" ]] || continue
-        [[ -e "$PROFILE_DIR/node_modules/$stale" ]] && continue
-        remove_file "$PROFILE_DIR/node_modules/$stale"
-    done
-}
-
-migrate_legacy_install
-
-add_plugin() {
-    local package="$1" version="$2" allow_build="${3:-}"
-    local args=(plugin --profile "$PROFILE" add --save-exact)
-    [[ -n "$allow_build" ]] && args+=(--allow-build="$allow_build")
-    [[ -n "$NPM_REGISTRY" ]] && args+=(--registry "$NPM_REGISTRY")
-    "$DSH_BIN" "${args[@]}" "${package}@${version}"
-}
-
-# dep_spec <依赖键>: profile manifest 里该依赖的版本 spec
-dep_spec() {
-    [[ -n "$1" && -f "$MANIFEST" ]] || return 0
-    node -p "require('$MANIFEST').dependencies?.['$1'] ?? ''" 2>/dev/null || true
-}
-
-# install_plugin <package> <version> [allow-build 包名] [旧依赖键]
-# 旧依赖键指无 scope 的 dsh-git / dsh-remote-workspace：它们各自也进 bundles，
-# 不先清掉就换 npm 包名，同一个 patch 会挂两次。
+# install_plugin <package> <version> [allow-build 包名]
 install_plugin() {
-    local package="$1" version="$2" allow_build="${3:-}" legacy_key="${4:-}"
-    local installed legacy_spec
+    local package="$1" version="$2" allow_build="${3:-}"
+    local spec installed args
 
-    case "$(dep_spec "$package")" in
+    # profile 里是本地 link/file 安装（开发用）就让位，别用 npm 版覆盖
+    spec="$(node -p "require('$MANIFEST').dependencies?.['$package'] ?? ''" 2>/dev/null || true)"
+    case "$spec" in
         link:* | file:*)
             echo "跳过: ${package}（profile 里是本地安装，开发用）"
             return 0
             ;;
     esac
-    # 旧键指向 release 缓存 tarball 的是旧版安装，要迁移；指向别处的本地安装不动
-    legacy_spec="$(dep_spec "$legacy_key")"
-    case "$legacy_spec" in
-        link:*)
-            echo "跳过: ${package}（profile 里是本地安装，开发用）"
-            return 0
-            ;;
-        file:*)
-            if [[ "$legacy_spec" != "file:${HOME}/.local/share/dsh-plugins/tarballs/"* ]]; then
-                echo "跳过: ${package}（profile 里是本地安装，开发用）"
-                return 0
-            fi
-            ;;
-    esac
 
-    installed="$(plugin_version "$package")"
-    if [[ -z "$installed" && -n "$legacy_key" ]]; then
-        installed="$(plugin_version "$legacy_key")"
-    fi
-
-    if [[ -n "$legacy_spec" ]]; then
-        echo "${package} 由旧依赖键 ${legacy_key}（${legacy_spec}）安装，改用 npm 包"
-        if ! confirm_update "${package}: 迁移到 npm 包（当前 ${installed:-unknown}）"; then
-            echo "跳过: ${package}"
-            return 0
-        fi
-    elif [[ "$installed" == "$version" ]]; then
+    installed="$(node -p "require('$PROFILE_DIR/node_modules/$package/package.json').version" 2>/dev/null || true)"
+    if [[ "$installed" == "$version" ]]; then
         echo "${package} ${version} 已安装"
         return 0
-    elif [[ "$UPDATE" == "1" && -z "$installed" ]]; then
+    fi
+    if [[ "$UPDATE" == "1" && -z "$installed" ]]; then
         echo "未安装，跳过: ${package}"
         return 0
-    elif [[ -n "$installed" ]] &&
-        ! confirm_update "${package}: ${installed} -> ${version}"; then
+    fi
+    if [[ -n "$installed" ]] && ! confirm_update "${package}: ${installed} -> ${version}"; then
         echo "跳过: ${package}"
         return 0
     fi
 
-    if [[ -n "$legacy_spec" ]]; then
-        "$DSH_BIN" plugin --profile "$PROFILE" remove "$legacy_key" || true
-    fi
-
     echo "安装 ${package} ${version}..."
-    add_plugin "$package" "$version" "$allow_build"
-    check_plugin_artifacts "$package"
+    args=(plugin --profile "$PROFILE" add --save-exact)
+    [[ -n "$allow_build" ]] && args+=(--allow-build="$allow_build")
+    [[ -n "$NPM_REGISTRY" ]] && args+=(--registry "$NPM_REGISTRY")
+    "$DSH_BIN" "${args[@]}" "${package}@${version}"
+
+    for artifact in lib/index.js lib/client.js; do
+        [[ -f "$PROFILE_DIR/node_modules/$package/$artifact" ]] || {
+            echo "错误: 插件产物缺失 $PROFILE_DIR/node_modules/$package/$artifact" >&2
+            exit 1
+        }
+    done
     echo "${package} ${version} 安装完成"
 }
 
 echo ""
-install_plugin "$RW_PACKAGE" "$RW_VERSION" node-pty dsh-remote-workspace
-install_plugin "$GIT_PACKAGE" "$GIT_VERSION" "" dsh-git
+install_plugin "$RW_PACKAGE" "$RW_VERSION" node-pty
+install_plugin "$GIT_PACKAGE" "$GIT_VERSION"
 
 # 全新安装时插件是上面几步才装上的，早先那次调用会因为“插件未装”直接返回，这里补一次
-ensure_router_disables
+ensure_disabled_entries
 echo ""
 echo "dsh 安装完成。重启 Web 服务生效: dsh web"
 echo "提示: provider 密钥引用由 install/dsh-auth.py 写入 $DSH_HOME_DIR/.credentials.yaml"
