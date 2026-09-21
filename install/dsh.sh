@@ -28,7 +28,7 @@ MANIFEST="$PROFILE_DIR/package.json"
 PATCH_FILE="$PROFILE_DIR/cordis.patch.yml"
 SETTINGS_FILE="$DSH_HOME_DIR/settings.yaml"
 RW_PACKAGE="@lengmoxxl/dsh-remote-workspace"
-RW_VERSION="0.1.13"
+RW_VERSION="0.1.14"
 GIT_PACKAGE="@lengmoxxl/dsh-git"
 GIT_VERSION="0.2.1"
 
