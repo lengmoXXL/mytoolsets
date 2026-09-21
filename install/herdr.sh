@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 BIN_DIR="${HOME}/.local/bin"
 HERDR_BIN="${BIN_DIR}/herdr"
-HERDR_VERSION="v0.9.0"
+HERDR_VERSION="v0.9.1"
 HERDR_SOURCE="$SCRIPT_DIR/../configs/herdr/config.toml"
 HERDR_DEST="$HOME/.config/herdr/config.toml"
 CURL_USER_AGENT="configs-install-herdr"
