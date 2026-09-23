@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="${HOME}/.local/bin"
 NPM_PREFIX="${HOME}/.local"
 DSH_PACKAGE="@deepseek-ai/dsh"
-DSH_VERSION="0.1.6-alpha.2"
+DSH_VERSION="0.1.7-rc.1"
 DSH_BIN="${BIN_DIR}/dsh"
 MIN_NODE_VERSION="22.19.0"
 NPM_REGISTRY=""
@@ -28,9 +28,9 @@ MANIFEST="$PROFILE_DIR/package.json"
 PATCH_FILE="$PROFILE_DIR/cordis.patch.yml"
 SETTINGS_FILE="$DSH_HOME_DIR/settings.yaml"
 RW_PACKAGE="@lengmoxxl/dsh-remote-workspace"
-RW_VERSION="0.1.14"
+RW_VERSION="0.1.17"
 GIT_PACKAGE="@lengmoxxl/dsh-git"
-GIT_VERSION="0.2.1"
+GIT_VERSION="0.2.3"
 
 usage() {
     cat << EOF
@@ -49,6 +49,8 @@ EOF
 
 UPDATE=0
 REMOVE=0
+CLI_UPDATED=0
+PROFILE_RESET=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --registry)
@@ -169,6 +171,7 @@ else
 
     echo "安装 dsh ${DSH_VERSION}..."
     npm "${npm_args[@]}"
+    CLI_UPDATED=1
 
     echo "dsh 安装完成: $DSH_BIN"
     "$DSH_BIN" --version
@@ -209,6 +212,26 @@ ensure_patch_entries() {
     if [[ -f "$PATCH_FILE" ]]; then
         awk -v b="$begin" -v e="$end" '$0 == b { inb = 1; next } $0 == e { inb = 0; next } !inb { print }' \
             "$PATCH_FILE" > "$outside"
+    fi
+
+    # 0.1.7 会把导入的 settings 直接写进这个 patch 文件，实测落在我们的块内。块里若有别的
+    # 条目，重写或删除都会把它们一起带走，所以只提示、不动。
+    local foreign
+    foreign="$(awk -v b="$begin" -v e="$end" -v ids="$*" '
+        BEGIN { n = split(ids, a, " "); for (i = 1; i <= n; i++) ours[a[i]] = 1 }
+        $0 == b { inb = 1; next }
+        $0 == e { inb = 0; next }
+        !inb { next }
+        /^- id: / { id = substr($0, 7); sub(/[ \t]+$/, "", id); if (!ours[id]) print $0; next }
+        /^[ \t]+disabled: true[ \t]*$/ { next }
+        /^[ \t]*$/ { next }
+        { print }
+    ' "$PATCH_FILE" 2>/dev/null)"
+    if [[ -n "$foreign" ]]; then
+        echo "警告: $PATCH_FILE 的 ${block_name} 块里有非本脚本写入的条目，跳过该块以免误删："
+        printf '%s\n' "$foreign"
+        rm -f "$outside"
+        return 0
     fi
 
     block_ids=""
@@ -252,6 +275,16 @@ ensure_disabled_entries() {
     fi
 }
 
+# dsh 换 CLI 版本后，旧 CLI 时期装的依赖树会让新 CLI 拒绝加载插件（0.1.6 -> 0.1.7 实测
+# dsh-remote-workspace "failed to import"）。只重建依赖树：保留 package.json（依赖声明与
+# bundles）、cordis.patch.yml（用户补丁）等 profile 内容，删掉 node_modules 与 pnpm-lock.yaml
+# 让 pnpm 按新 CLI 重新解析。开发用的 link:/file: profile 不动。
+if [[ "$CLI_UPDATED" == "1" && -f "$MANIFEST" ]] && ! grep -qE '"(link|file):' "$MANIFEST"; then
+    echo "dsh 换成 ${DSH_VERSION}，重建 profile 依赖树（保留 package.json 与 cordis.patch.yml）"
+    rm -rf "$PROFILE_DIR/node_modules" "$PROFILE_DIR/pnpm-lock.yaml"
+    PROFILE_RESET=1
+fi
+
 # 先补齐停用再动插件：插件已装好的机器上，任何后续步骤失败都不该让它停在“不接管路由”的状态
 ensure_disabled_entries
 
@@ -274,7 +307,7 @@ install_plugin() {
         echo "${package} ${version} 已安装"
         return 0
     fi
-    if [[ "$UPDATE" == "1" && -z "$installed" ]]; then
+    if [[ "$UPDATE" == "1" && -z "$installed" && "$PROFILE_RESET" != "1" ]]; then
         echo "未安装，跳过: ${package}"
         return 0
     fi
