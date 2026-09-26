@@ -3,7 +3,7 @@
     "read",
     "bash",
     "subagent",
-    "subagent_wait",
+    "bg_wait",
     "subagent_supervisor",
     "web_search",
     "source_check",
