@@ -8,7 +8,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { Box, Text } from "@earendil-works/pi-tui";
 
 const STATUS_KEY = "refine";
-const MAX_ROUNDS = 10;
+const MAX_ROUNDS = 30;
 const CHECK_TIMEOUT_MS = 3_600_000;
 // Fallback when the delegation bridge never answers (pi-subagents not loaded).
 const NO_RESPONSE_TIMEOUT_MS = CHECK_TIMEOUT_MS + 30_000;
