@@ -16,6 +16,7 @@
   ],
   "defaultThinkingLevel": "high",
   "hideThinkingBlock": true,
+  "defaultTools": ["+codemode"],
   "retry": {
     "enabled": true,
     "maxRetries": 10,
