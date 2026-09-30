@@ -209,7 +209,7 @@ Report the verdict ONLY by calling the structured_output tool with
 			return;
 		}
 		if (outcome.passed || outcome.findings.length === 0) {
-			ctx.ui.notify(`refine: criteria satisfied after round ${completedRound}`, "success");
+			ctx.ui.notify(`refine: criteria satisfied after round ${completedRound}`, "info");
 			reset(ctx);
 			return;
 		}
