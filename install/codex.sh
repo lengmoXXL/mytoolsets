@@ -1,14 +1,18 @@
 #!/bin/bash
-# Install or update Codex CLI binaries from GitHub Releases.
+# Install or update the Codex CLI release package from GitHub Releases.
+# The CLI only works as a complete release package (codex-package.json plus
+# codex-resources), so install the whole tree into PACKAGE_DIR and expose the
+# ~/.local/bin entries as symlinks into it.
 # The installed version is pinned here; use tools/latest-version.sh to check updates.
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../tools" && pwd)/common.sh"
 
 BIN_DIR="${HOME}/.local/bin"
+PACKAGE_DIR="${HOME}/.local/share/codex"
 CODEX_BIN="${BIN_DIR}/codex"
 CODE_MODE_HOST_BIN="${BIN_DIR}/codex-code-mode-host"
-CODEX_VERSION="0.159.2"
+CODEX_VERSION="0.160.0"
 CURL_USER_AGENT="configs-install-codex"
 GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
@@ -51,10 +55,11 @@ if [[ "$REMOVE" == "1" ]]; then
     confirm_remove "codex" || exit 0
     remove_file "$CODEX_BIN"
     remove_file "$CODE_MODE_HOST_BIN"
+    remove_dir "$PACKAGE_DIR"
     exit 0
 fi
 
-for dep in curl sed tar install uname mktemp; do
+for dep in curl sed tar rsync uname mktemp; do
     if ! command -v "$dep" &>/dev/null; then
         echo "错误: 缺少依赖 $dep"
         exit 1
@@ -115,12 +120,12 @@ else
 
     version_cmp=$(compare_versions "$local_version" "$CODEX_VERSION")
     if [[ "$version_cmp" == "0" ]]; then
-        if [[ -x "$CODE_MODE_HOST_BIN" ]]; then
+        if [[ -f "${PACKAGE_DIR}/codex-package.json" && -x "$CODE_MODE_HOST_BIN" ]]; then
             echo "Codex 已是目标版本"
             exit 0
         fi
-        echo "Codex 已是目标版本，但缺少 codex-code-mode-host，将补充安装"
-        confirm_update "codex-code-mode-host 补装" || exit 0
+        echo "Codex 已是目标版本，但本地包不完整，将重新安装"
+        confirm_update "codex 包修复安装" || exit 0
     elif [[ "$version_cmp" == "1" ]]; then
         echo "本地 Codex 版本高于目标版本，不执行更新"
         exit 0
@@ -154,18 +159,19 @@ trap cleanup EXIT
 
 echo "下载 Codex ${CODEX_VERSION} (${target})..."
 curl -fL -H "User-Agent: ${CURL_USER_AGENT}" "$url" -o "$tarball"
-tar -xzf "$tarball" -C "$tmp_dir"
+package_src="${tmp_dir}/pkg"
+mkdir -p "$package_src"
+tar -xzf "$tarball" -C "$package_src"
 
-codex_binary="${tmp_dir}/bin/codex"
-code_mode_host_binary="${tmp_dir}/bin/codex-code-mode-host"
-if [[ ! -f "$codex_binary" || ! -f "$code_mode_host_binary" ]]; then
-    echo "错误: Codex 压缩包中缺少 codex 或 codex-code-mode-host 二进制文件"
+if [[ ! -f "${package_src}/codex-package.json" || ! -f "${package_src}/bin/codex" || ! -f "${package_src}/bin/codex-code-mode-host" ]]; then
+    echo "错误: Codex 压缩包中缺少 codex-package.json 或二进制文件"
     exit 1
 fi
 
-mkdir -p "$BIN_DIR"
-install -m 755 "$code_mode_host_binary" "$CODE_MODE_HOST_BIN"
-install -m 755 "$codex_binary" "$CODEX_BIN"
+mkdir -p "$PACKAGE_DIR" "$BIN_DIR"
+rsync -ai --delete "${package_src}/" "${PACKAGE_DIR}/" > /dev/null
+ln -sfn "${PACKAGE_DIR}/bin/codex" "$CODEX_BIN"
+ln -sfn "${PACKAGE_DIR}/bin/codex-code-mode-host" "$CODE_MODE_HOST_BIN"
 
 echo "Codex 安装完成: $CODEX_BIN"
 "$CODEX_BIN" --version
