@@ -1,5 +1,6 @@
 {
   "theme": "gray",
+  "tuiMode": "regular",
   "defaultProvider": "qwen-token-plan-cn",
   "defaultModel": "deepseek-v4.1-flash",
   "subagents": {
