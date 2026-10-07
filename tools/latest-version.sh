@@ -15,8 +15,6 @@ Packages:
   GitHub release  ripgrep(rg) fzf fd cmake tmux nvim uv codex opencode herdr
                   lua-lsp starpls typos-lsp(typos) rust sarasa aurulent droid
   npm             pi-agent(pi) pnpm playwright typescript-lsp bash-lsp pyright
-                  dsh-git dsh-remote-workspace
-  npm next        dsh
   PyPI            tldr
   crates.io       tree-sitter
   其他            go gopls node zig kimi
@@ -49,8 +47,6 @@ entry() {
         typescript-lsp) echo "npm typescript-language-server" ;;
         bash-lsp) echo "npm bash-language-server" ;;
         pyright) echo "npm pyright" ;;
-        # dsh 的固定版本取自 next 通道（latest 还停在更早的 rc）
-        dsh) echo "npmnext @deepseek-ai/dsh" ;;
         tldr) echo "pypi tldr" ;;
         tree-sitter) echo "crates tree-sitter-cli" ;;
         go) echo "go -" ;;
@@ -61,8 +57,6 @@ entry() {
         doc-research) echo "commit https://github.com/lengmoXXL/doc-research.git" ;;
         neovim-skill) echo "commit https://github.com/lengmoXXL/neovim-skill.git" ;;
         markdown-oxide) echo "commit https://github.com/lengmoXXL/markdown-oxide.git" ;;
-        dsh-git) echo "npm @lengmoxxl/dsh-git" ;;
-        dsh-remote-workspace) echo "npm @lengmoxxl/dsh-remote-workspace" ;;
         */*) echo "gh $1" ;;
         *) return 1 ;;
     esac
@@ -70,8 +64,7 @@ entry() {
 
 ALL_PACKAGES="ripgrep fzf fd cmake tmux nvim uv codex opencode herdr lua-lsp starpls
 typos-lsp rust pi-agent pnpm playwright typescript-lsp bash-lsp pyright tldr tree-sitter
-go gopls node zig kimi dsh doc-research neovim-skill markdown-oxide sarasa aurulent droid
-dsh-git dsh-remote-workspace"
+go gopls node zig kimi doc-research neovim-skill markdown-oxide sarasa aurulent droid"
 
 latest() {
     local source="$1" target="$2"

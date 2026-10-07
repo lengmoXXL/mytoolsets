@@ -1,5 +1,5 @@
 #!/bin/bash
-# 安装/更新 pnpm 到 ~/.local（dsh plugin 管理 profile 依赖用）
+# 安装/更新 pnpm 到 ~/.local
 # 固定版本写在 PNPM_VERSION；升级前用 tools/latest-version.sh pnpm 查上游
 # 不加 --ignore-scripts：pnpm 的 pre/postinstall 会把 bin 换成宿主原生二进制，
 # 被 npm 拦下时 bin 回退为 node 包装脚本，仍可用（仅启动略慢）

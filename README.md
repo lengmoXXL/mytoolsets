@@ -17,8 +17,6 @@ configs/
 │   ├── cmake.sh
 │   ├── codex.sh
 │   ├── doc-research.sh         # doc-research CLI（固定 commit）+ doc-research-init
-│   ├── dsh-auth.py           # .credentials.yaml 写 provider refs（deepseek、qwen token plan）
-│   ├── dsh.sh                # DeepSeek Harness：CLI（npm 固定版本）+ 用户设置 + web profile 插件
 │   ├── fd.sh
 │   ├── fonts.sh
 │   ├── fzf.sh
@@ -40,7 +38,7 @@ configs/
 │   ├── pi-auth.py             # auth.json 合并式更新（sync: skip，手动执行）
 │   ├── pj.sh
 │   ├── playwright.sh
-│   ├── pnpm.sh                # pnpm（dsh plugin 管理 profile 依赖用，npm 固定版本）
+│   ├── pnpm.sh                # pnpm（npm 固定版本）
 │   ├── prd.sh
 │   ├── ripgrep.sh
 │   ├── style-check.sh
@@ -75,8 +73,6 @@ configs/
 │   │   ├── git-safety.md
 │   │   ├── inline-functions.md
 │   │   └── response-style.md
-│   ├── dsh/
-│   │   └── settings.yaml
 │   ├── ghostty/
 │   │   └── config
 │   ├── herdr/
