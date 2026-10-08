@@ -229,8 +229,10 @@ Judge every finding below against the acceptance criteria before fixing anything
 fix the real ones; for a finding you judge wrong, do not fix it and say plainly
 that you reject it and why (cite the file, line, or the criterion it misreads),
 so the next round does not raise it again; if you cannot tell whether a finding
-is right, do not guess -- call the ask_user_question tool with the finding and
-your doubt, then act on the user's decision.
+is right, do not guess -- ask the user with ask_user_question and act on the
+decision. Call it from a codemode script when it is not declared directly:
+\`await tools.ask_user_question({ questions: [{ header, id, question, options }] })\`,
+with 2-4 mutually exclusive options per question.
 A follow-up check runs automatically after this turn; do not restate the criteria
 or the findings you are fixing.
 After fixing, re-check every criterion yourself to ensure nothing is missed.
