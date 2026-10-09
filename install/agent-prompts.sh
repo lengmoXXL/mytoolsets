@@ -126,10 +126,10 @@ fi
 
 # 目标文件 <- 按顺序组合的 prompt 文件（prompt 按语义命名，与 agent 的关联只在这里声明）
 install_mode codex "${CODEX_AGENTS_DEST:-$HOME/.codex/AGENTS.md}" \
-    inline-functions.md
+    inline-functions.md file-links.md
 
 install_mode opencode "${OPENCODE_AGENTS_DEST:-$HOME/.config/opencode/AGENTS.md}" \
-    git-safety.md inline-functions.md
+    git-safety.md inline-functions.md file-links.md
 
 install_mode pi "${PI_AGENTS_DEST:-$HOME/.pi/agent/AGENTS.md}" \
-    response-style.md git-safety.md editing-constraints.md inline-functions.md
+    response-style.md git-safety.md editing-constraints.md inline-functions.md file-links.md

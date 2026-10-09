@@ -70,6 +70,7 @@ configs/
 ├── configs/
 │   ├── agents/
 │   │   ├── editing-constraints.md
+│   │   ├── file-links.md
 │   │   ├── git-safety.md
 │   │   ├── inline-functions.md
 │   │   └── response-style.md
