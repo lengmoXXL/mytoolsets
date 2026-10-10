@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "passed": { "type": "boolean" },
+    "findings": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["passed", "findings"],
+  "additionalProperties": false
+}

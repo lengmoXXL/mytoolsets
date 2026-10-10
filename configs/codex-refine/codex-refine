@@ -1,0 +1,94 @@
+#!/bin/bash
+# codex-refine：开关 refine 循环并查看状态
+# 循环本身跑在 Codex 的 Stop hook 里（~/.codex/hooks/refine-stop.sh），这里只维护 state
+
+set -euo pipefail
+
+STATE_DIR="${CODEX_REFINE_DIR:-$HOME/.codex/refine}"
+CRITERIA_FILE="$STATE_DIR/criteria.md"
+SESSION_FILE="$STATE_DIR/session"
+ROUND_FILE="$STATE_DIR/round"
+FINDINGS_FILE="$STATE_DIR/findings.md"
+MAX_ROUNDS="${CODEX_REFINE_MAX_ROUNDS:-30}"
+
+HOOKS_JSON="$HOME/.codex/hooks.json"
+CODEX_CONFIG="$HOME/.codex/config.toml"
+HOOK_SCRIPT="$HOME/.codex/hooks/refine-stop.sh"
+
+# hook 声明可能被别的工具（例如 Orca）重写掉，start/status 里顺带检查
+hook_registered() {
+    if [[ -f "$HOOKS_JSON" ]] && grep -qF "$HOOK_SCRIPT" "$HOOKS_JSON"; then
+        return 0
+    fi
+    [[ -f "$CODEX_CONFIG" ]] && grep -qF "$HOOK_SCRIPT" "$CODEX_CONFIG"
+}
+
+usage() {
+    cat <<EOF
+用法: codex-refine <命令>
+  start "<验收标准>"  开启循环：回合结束后评审，未通过就把 findings 打回去继续修
+                      （验收标准也可以写成 - 从 stdin 读）
+  stop                关闭循环（保留 findings.md 与 refine.log）
+  status              显示循环状态
+EOF
+}
+
+start() {
+    local criteria="${1:-}"
+    if [[ "$criteria" == "-" ]]; then
+        criteria="$(cat)"
+    fi
+    if [[ -z "${criteria//[[:space:]]/}" ]]; then
+        echo "错误: 需要验收标准，例如 codex-refine start '所有测试通过且文档已更新'" >&2
+        exit 1
+    fi
+    mkdir -p "$STATE_DIR"
+    printf '%s\n' "$criteria" >"$CRITERIA_FILE"
+    rm -f "$SESSION_FILE" "$ROUND_FILE" "$STATE_DIR/review.json"
+    echo "refine 已开启（上限 ${MAX_ROUNDS} 轮）"
+    echo "在目标 Codex 会话里继续工作：它下一次结束回合时接管这个循环"
+    if ! hook_registered; then
+        echo "警告: Stop hook 未注册，先运行 install/codex-refine.sh --update" >&2
+    fi
+}
+
+stop() {
+    rm -f "$CRITERIA_FILE" "$SESSION_FILE" "$ROUND_FILE" "$STATE_DIR/review.json"
+    echo "refine 已关闭"
+}
+
+status() {
+    if [[ ! -s "$CRITERIA_FILE" ]]; then
+        echo "refine 未开启"
+    else
+        echo "验收标准:"
+        sed 's/^/  /' "$CRITERIA_FILE"
+        echo "轮次: $(cat "$ROUND_FILE" 2>/dev/null || echo 0)/$MAX_ROUNDS"
+        if [[ -s "$SESSION_FILE" ]]; then
+            echo "会话: $(cat "$SESSION_FILE")"
+        else
+            echo "会话: 等待第一个结束回合的 Codex 会话接管"
+        fi
+    fi
+    if [[ -s "$FINDINGS_FILE" ]]; then
+        echo "最近 findings:"
+        sed 's/^/  /' "$FINDINGS_FILE"
+    fi
+    echo "日志: $STATE_DIR/refine.log"
+    if hook_registered; then
+        echo "hook: 已注册"
+    else
+        echo "hook: 未注册（hooks.json 可能被别的工具重写了），运行 install/codex-refine.sh --update"
+    fi
+}
+
+case "${1:-}" in
+    start) start "${2:-}" ;;
+    stop) stop ;;
+    status) status ;;
+    -h | --help | help) usage ;;
+    *)
+        usage >&2
+        exit 1
+        ;;
+esac

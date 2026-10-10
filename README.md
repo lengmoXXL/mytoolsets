@@ -16,6 +16,7 @@ configs/
 │   ├── clashctl.sh
 │   ├── cmake.sh
 │   ├── codex.sh
+│   ├── codex-refine.sh          # Codex refine 循环：Stop hook + 结构化评审 + codex-refine 命令
 │   ├── doc-research.sh         # doc-research CLI（固定 commit）+ doc-research-init
 │   ├── fd.sh
 │   ├── fonts.sh
@@ -74,6 +75,10 @@ configs/
 │   │   ├── git-safety.md
 │   │   ├── inline-functions.md
 │   │   └── response-style.md
+│   ├── codex-refine/           # 见 install/codex-refine.sh
+│   │   ├── codex-refine
+│   │   ├── findings.schema.json
+│   │   └── refine-stop.sh
 │   ├── ghostty/
 │   │   └── config
 │   ├── herdr/
