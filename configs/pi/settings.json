@@ -36,6 +36,7 @@
     "zai-coding-cn/glm-5.3",
     "zai-coding-cn/glm-5.3-flash",
     "kimi-coding/k3",
-    "kimi-coding/k3-256k"
+    "kimi-coding/k3-256k",
+    "openai-codex/gpt-6.1-sol"
   ]
 }
