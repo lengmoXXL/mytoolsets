@@ -1,13 +1,14 @@
 ---
 name: code-style
-description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, mixed abstraction levels, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, or unrequested documentation.
+description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, mixed abstraction levels, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, unintuitive information order, or unrequested documentation.
 ---
 
 # Code Style
 
-Use this skill to review code and documentation changes for necessity; docs
-are reviewed as code. Every function, option, helper, abstraction, comment,
-file, dependency, section, paragraph, and sentence must earn its place.
+Use this skill to review code and documentation changes for necessity and
+arrangement; docs are reviewed as code. Every function, option, helper,
+abstraction, comment, file, dependency, section, paragraph, and sentence
+must earn its place.
 
 ## Scope
 
@@ -117,6 +118,75 @@ The rewrite is cut off from its only reader and also runs on paths that
 never use the value. Put the local-path return first, then keep the rewrite
 directly above the `ls-remote` that consumes it.
 
+### Order Builds Understanding Gradually
+
+Order content so every step eliminates uncertainty as early as possible: a
+case is ruled out before the path it clears, and no step leaves the reader
+holding something unresolved.
+
+Then keep the thread continuous: a reader follows content one step at a time
+and cannot take a step whose prerequisite arrives later. Put what a step
+depends on before the step: prerequisites before the procedure, purpose before
+mechanism, a term before its first use, a value before the operation on it.
+
+Flag content that reads out of order: forward references, a sequence the reader
+must double back through, and unrelated threads interleaved (see Related Code
+Stays Together).
+
+Flag implementations that defer error handling or nest the happy path; this
+applies only to checks that must exist and never justifies adding new guards
+(see Over-Defensive Guards).
+
+#### Example: Deferred Error Branch
+
+Control flow lands the rule hardest: a necessary check dispatches its failure
+branch immediately (early return/throw) and keeps the remaining path at the top
+indentation level.
+
+```go
+func loadConfig(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err == nil {
+		var cfg Config
+		if err := json.Unmarshal(data, &cfg); err == nil {
+			return &cfg, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+}
+```
+
+Every error branch is known at the check site but resolved later, and the
+success path sinks two levels deep. Resolve each branch the moment it is known:
+
+```go
+func loadConfig(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var cfg Config
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
+```
+
+#### Example: Purpose After Mechanism
+
+```markdown
+etcd replicates every write through Raft and streams changes over a watch
+API, which is what makes it a cluster's shared configuration store.
+```
+
+The mechanism precedes what the thing is, so the sentence can only be
+understood by reading backwards. Lead with what it is and what it is for, then
+the mechanism that delivers it.
+
 ### Self-Explanatory Code Over Comments
 
 Flag comments that restate what the code already says: narrating the
@@ -180,52 +250,6 @@ precondition. Prefer removing the guard:
 ```go
 func (s *Store) Save(ctx context.Context, item Item) error {
 	return s.db.Save(ctx, item)
-}
-```
-
-### Fast Entropy Reduction
-
-Structure each function so every step eliminates uncertainty as early as
-possible. A necessary check should dispatch its failure branch immediately
-(early return/throw), keeping the remaining path at the top indentation level.
-Flag implementations that defer error handling or nest the happy path, forcing
-the reader to hold unresolved branches in mind.
-
-This applies only to checks that must exist; it never justifies adding new
-guards (see Over-Defensive Guards).
-
-#### Example: Deferred Error Branch
-
-```go
-func loadConfig(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
-	if err == nil {
-		var cfg Config
-		if err := json.Unmarshal(data, &cfg); err == nil {
-			return &cfg, nil
-		} else {
-			return nil, err
-		}
-	} else {
-		return nil, err
-	}
-}
-```
-
-Every error branch is known at the check site but resolved later, and the
-success path sinks two levels deep. Resolve each branch the moment it is known:
-
-```go
-func loadConfig(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var cfg Config
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
 }
 ```
 
@@ -361,8 +385,8 @@ Use this format for each finding:
 
 ```text
 <file>:<line>
-判断：<specific part> 不必要
-原因：<why this part does not need to exist>
+判断：<specific part> 不必要，或位置、次序、拆分与合并不当
+原因：<为何它不必要、该换位置或次序，或该拆分/合并>
 ```
 
 Keep reasons specific to the reviewed range. Avoid general style essays.
