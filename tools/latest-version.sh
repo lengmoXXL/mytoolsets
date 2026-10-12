@@ -12,7 +12,7 @@ usage() {
 --all  列出全部已知工具的上游最新版
 
 Packages:
-  GitHub release  ripgrep(rg) fzf fd cmake tmux nvim uv codex opencode herdr
+  GitHub release  ripgrep(rg) fzf fd cmake tmux nvim uv codex herdr
                   lua-lsp starpls typos-lsp(typos) rust sarasa aurulent droid
   npm             pi-agent(pi) pnpm playwright typescript-lsp bash-lsp pyright
   PyPI            tldr
@@ -33,7 +33,6 @@ entry() {
         nvim | neovim) echo "gh neovim/neovim" ;;
         uv) echo "gh astral-sh/uv" ;;
         codex) echo "gh openai/codex" ;;
-        opencode) echo "gh anomalyco/opencode" ;;
         herdr) echo "gh herdrdev/herdr" ;;
         lua-lsp | lua-language-server) echo "gh LuaLS/lua-language-server" ;;
         starpls) echo "gh withered-magic/starpls" ;;
@@ -62,7 +61,7 @@ entry() {
     esac
 }
 
-ALL_PACKAGES="ripgrep fzf fd cmake tmux nvim uv codex opencode herdr lua-lsp starpls
+ALL_PACKAGES="ripgrep fzf fd cmake tmux nvim uv codex herdr lua-lsp starpls
 typos-lsp rust pi-agent pnpm playwright typescript-lsp bash-lsp pyright tldr tree-sitter
 go gopls node zig kimi doc-research neovim-skill markdown-oxide sarasa aurulent droid"
 
