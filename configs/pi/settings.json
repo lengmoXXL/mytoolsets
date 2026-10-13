@@ -14,10 +14,11 @@
     "npm:pi-web-access",
     "npm:@narumitw/pi-plan-mode",
     "npm:@juicesharp/rpiv-ask-user-question",
-    "npm:pi-zentui"
+    "npm:pi-zentui",
+    "npm:pi-compact-tools"
   ],
   "defaultThinkingLevel": "high",
-  "hideThinkingBlock": true,
+  "hideThinkingBlock": false,
   "defaultTools": ["+codemode"],
   "retry": {
     "enabled": true,
@@ -32,10 +33,6 @@
     "qwen-token-plan-cn/deepseek-v4.1-flash",
     "qwen-token-plan-cn/qwen3.8-max",
     "qwen-token-plan-cn/qwen3.8-flash",
-    "zai-coding-cn/glm-5.3",
-    "zai-coding-cn/glm-5.3-flash",
-    "kimi-coding/k3",
-    "kimi-coding/k3-256k",
     "openai-codex/gpt-6.1-sol"
   ]
 }
