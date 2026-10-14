@@ -10,6 +10,9 @@
           }
         }
       }
+    },
+    "workingLine": {
+      "enabled": false
     }
   },
   "icons": {
