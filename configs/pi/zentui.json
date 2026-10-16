@@ -1,6 +1,11 @@
 {
   "components": {
     "footer": {
+      "colors": {
+        "contextNormal": "",
+        "extensionStatus": "",
+        "separator": "dim"
+      },
       "styles": {
         "starship": {
           "format": "$context$sep$token_rate",
