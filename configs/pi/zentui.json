@@ -2,8 +2,8 @@
   "components": {
     "footer": {
       "colors": {
-        "contextNormal": "",
-        "extensionStatus": "",
+        "contextNormal": "dim",
+        "extensionStatus": "dim",
         "separator": "dim"
       },
       "styles": {
