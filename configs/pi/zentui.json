@@ -3,9 +3,9 @@
     "footer": {
       "styles": {
         "starship": {
-          "format": "$context · $token_rate",
-          "compactFormat": "$context$wrap· $token_rate",
-          "separator": "dot",
+          "format": "$context$sep$token_rate",
+          "compactFormat": "$context$wrap_sep$token_rate",
+          "separator": "pipe",
           "extensionStatuses": {
             "defaultPlacement": "left"
           }
