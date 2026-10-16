@@ -12,7 +12,7 @@ BIN_DIR="${HOME}/.local/bin"
 PACKAGE_DIR="${HOME}/.local/share/codex"
 CODEX_BIN="${BIN_DIR}/codex"
 CODE_MODE_HOST_BIN="${BIN_DIR}/codex-code-mode-host"
-CODEX_VERSION="0.162.1"
+CODEX_VERSION="0.163.0"
 CURL_USER_AGENT="configs-install-codex"
 GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
