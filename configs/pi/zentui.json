@@ -8,11 +8,12 @@
       },
       "styles": {
         "starship": {
-          "format": "$context$sep$token_rate",
-          "compactFormat": "$context$wrap_sep$token_rate",
-          "separator": "pipe",
+          "format": "$context( \u001b[2m·\u001b[0m $token_rate)",
+          "compactFormat": "$context( \u001b[2m·\u001b[0m $token_rate)",
+          "separator": "dot",
           "extensionStatuses": {
-            "defaultPlacement": "left"
+            "defaultPlacement": "left",
+            "colorModes": { "refine": "zentui" }
           }
         }
       }
