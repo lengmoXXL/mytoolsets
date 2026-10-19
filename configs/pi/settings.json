@@ -3,7 +3,7 @@
   "tuiMode": "regular",
   "terminal": { "hyperlinks": true },
   "defaultProvider": "qwen-token-plan-cn",
-  "defaultModel": "deepseek-v4.1-flash",
+  "defaultModel": "deepseek-v4.1-flash-1017",
   "subagents": {
     "disableBuiltins": true
   },
@@ -33,6 +33,7 @@
     "qwen-token-plan-cn/deepseek-v4.1-flash",
     "qwen-token-plan-cn/qwen3.8-max",
     "qwen-token-plan-cn/qwen3.8-flash",
+    "qwen-token-plan-cn/deepseek-v4.1-flash-1017",
     "openai-codex/gpt-6.1-sol"
   ]
 }
