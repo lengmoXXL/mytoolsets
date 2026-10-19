@@ -1,6 +1,18 @@
 {
   "providers": {
     "qwen-token-plan-cn": {
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash-1017",
+          "name": "DeepSeek V4.1 Flash 1017",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 300000,
+          "maxTokens": 384000,
+          "thinkingLevelMap": { "off": null, "minimal": null, "low": "low", "medium": null, "high": "high", "xhigh": null, "max": "max" },
+          "compat": { "supportsStrictMode": true, "thinkingFormat": "qwen", "supportsDeveloperRole": false, "supportsStore": false, "supportsReasoningEffort": true }
+        }
+      ],
       "modelOverrides": {
         "deepseek-v4.1-flash": { "contextWindow": 300000 },
         "deepseek-v4-flash-0731": { "contextWindow": 300000 },
