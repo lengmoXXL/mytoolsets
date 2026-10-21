@@ -12,14 +12,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="${HOME}/.local/bin"
 NPM_PREFIX="${HOME}/.local"
 PI_PACKAGE="@earendil-works/pi-coding-agent"
-# 1.3.0 起 fork 子会话不再激活子进程内注册的专用工具（structured_output 等，由
-# pi-subagents 运行时 registerTool 注册）。实测：refine 轮次校验子代理在自己的 codemode
-# 里 ALL_TOOLS 无 structured_output，只能把 JSON 写进正文，宿主报
-# "Missing structured_output call"，refine 打 retry 警告后循环终止；99 个历史 fork 会话
-# 中 98 个声明了该工具，唯一缺失者即 1.3.0 装好后启动的第一个 fork（pi-subagents 0.79.0 未变）。
-# 升级条件：pi-subagents 上游确认适配 1.3.0 后再升，且必须实测一次 /refine 轮次校验返回
-# structured 结果（而非退化成正文）；否则保持 1.2.0
-PI_VERSION="1.2.0"
+# 1.3.0 起，用默认工具集的会话在构造时按 transcript 恢复 active tools，fork 子会话因此
+# 丢掉子进程注册的工具（structured_output 等）；refine 校验依赖 refine-checker.md 里
+# 的显式 tools 声明，删掉它会让 /refine 报 Missing structured_output call。
+PI_VERSION="1.3.0"
 PI_BIN="${BIN_DIR}/pi"
 MIN_NODE_VERSION="22.19.0"
 NPM_REGISTRY=""

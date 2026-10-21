@@ -99,6 +99,7 @@ configs/
 │   │   ├── pi-plan-mode.json
 │   │   ├── zentui.json
 │   │   ├── agents/
+│   │   │   ├── refine-checker.md
 │   │   │   └── worker.md
 │   │   ├── extensions/
 │   │   │   ├── flat-editor.ts.disabled

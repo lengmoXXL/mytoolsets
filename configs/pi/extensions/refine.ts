@@ -1,6 +1,6 @@
 // /refine <prompt>: iterative refinement loop against acceptance criteria.
 // <prompt> is the acceptance standard. Each round forks the current context into a
-// worker subagent via the pi-subagents delegation API; if the check
+// read-only checker subagent via the pi-subagents delegation API; if the check
 // reports findings, they are injected as a fix directive for the main agent, and
 // the work is re-checked after the fix turn. The loop exits when the check passes.
 
@@ -132,7 +132,7 @@ export default function (pi: ExtensionAPI) {
 			requestId,
 			ownerRunId: `refine-${ctx.sessionManager.getSessionId()}`,
 			nodeId: `refine-r${round}-${requestId.slice(0, 8)}`,
-			agent: "worker",
+			agent: "refine-checker",
 			task: `Refinement check, round ${round} of an iterative loop that repeats after every fix turn.
 Acceptance criteria:
 ${criteria}
