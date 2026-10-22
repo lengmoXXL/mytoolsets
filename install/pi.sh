@@ -12,10 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="${HOME}/.local/bin"
 NPM_PREFIX="${HOME}/.local"
 PI_PACKAGE="@earendil-works/pi-coding-agent"
-# 1.3.0 起，用默认工具集的会话在构造时按 transcript 恢复 active tools，fork 子会话因此
-# 丢掉子进程注册的工具（structured_output 等）；refine 校验依赖 refine-checker.md 里
-# 的显式 tools 声明，删掉它会让 /refine 报 Missing structured_output call。
-PI_VERSION="1.3.0"
+PI_VERSION="1.4.0"
 PI_BIN="${BIN_DIR}/pi"
 MIN_NODE_VERSION="22.19.0"
 NPM_REGISTRY=""
