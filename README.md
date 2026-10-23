@@ -106,7 +106,6 @@ configs/
 │   │   │   ├── herdr-agent-state.ts  # herdr 状态上报集成（herdr 管理，升级时从 herdr integration install pi 重新同步）
 │   │   │   ├── link-pi-types.sh
 │   │   │   ├── refine.ts
-│   │   │   ├── wangcai-agent-state.ts  # 旺财 terminal-agent 上报集成（旺财 管理，每次连接自动重装；仓库副本仅供留存，--update 会被镜像覆盖）
 │   │   │   └── tsconfig.json
 │   │   └── themes/
 │   │       └── gray.json
