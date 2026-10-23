@@ -12,7 +12,7 @@ BIN_DIR="${HOME}/.local/bin"
 PACKAGE_DIR="${HOME}/.local/share/codex"
 CODEX_BIN="${BIN_DIR}/codex"
 CODE_MODE_HOST_BIN="${BIN_DIR}/codex-code-mode-host"
-CODEX_VERSION="0.163.0"
+CODEX_VERSION="0.164.0"
 CURL_USER_AGENT="configs-install-codex"
 GITHUB_RELEASE_PROXY="https://gh-proxy.com/"
 
@@ -108,18 +108,6 @@ compare_versions() {
     echo 0
 }
 
-configure_codex() {
-    local config_file="${CODEX_HOME:-${HOME}/.codex}/config.toml"
-    local config_tmp
-    config_tmp=$(mktemp -d)
-    if [[ -f "$config_file" ]]; then
-        cp "$config_file" "${config_tmp}/config.toml"
-    fi
-    CODEX_HOME="$config_tmp" "$CODEX_BIN" features disable tui_app_server > /dev/null
-    write_file_if_changed "$config_file" "${config_tmp}/config.toml"
-    rm -rf "$config_tmp"
-}
-
 if [[ -z "$local_codex" || -z "$local_version" ]]; then
     if [[ "$UPDATE" == "1" ]]; then
         echo "未安装，跳过: codex"
@@ -134,14 +122,12 @@ else
     if [[ "$version_cmp" == "0" ]]; then
         if [[ -f "${PACKAGE_DIR}/codex-package.json" && -x "$CODE_MODE_HOST_BIN" ]]; then
             echo "Codex 已是目标版本"
-            configure_codex
             exit 0
         fi
         echo "Codex 已是目标版本，但本地包不完整，将重新安装"
         confirm_update "codex 包修复安装" || exit 0
     elif [[ "$version_cmp" == "1" ]]; then
         echo "本地 Codex 版本高于目标版本，不执行更新"
-        configure_codex
         exit 0
     else
         confirm_update "codex: ${local_version} -> ${CODEX_VERSION}" || exit 0
@@ -189,4 +175,3 @@ ln -sfn "${PACKAGE_DIR}/bin/codex-code-mode-host" "$CODE_MODE_HOST_BIN"
 
 echo "Codex 安装完成: $CODEX_BIN"
 "$CODEX_BIN" --version
-configure_codex
