@@ -132,7 +132,8 @@ configs/
     │   ├── src/preview_server.ts
     │   └── ...
     ├── secrets.sh               # 同步 provider API keys
-    └── style-check.sh
+    ├── style-check.sh
+    └── tcc-reset.sh             # 清除 App 的 TCC 授权记录并引导重加（adhoc 签名重建后 csreq 失配时用）
 ```
 
 ## install 脚本约束
