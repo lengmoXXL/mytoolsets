@@ -1,7 +1,9 @@
 {
   "theme": "gray",
   "tuiMode": "regular",
-  "terminal": { "hyperlinks": true },
+  "terminal": {
+    "hyperlinks": true
+  },
   "defaultProvider": "qwen-token-plan-cn",
   "defaultModel": "deepseek-v4.1-flash-1017",
   "subagents": {
@@ -15,11 +17,18 @@
     "npm:@narumitw/pi-plan-mode",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-zentui",
-    "npm:pi-compact-tools"
+    "npm:pi-compact-tools",
+    "npm:@calesennett/pi-codex-fast"
   ],
+  "pi-codex-fast": {
+    "enabled": true,
+    "mode": "fast"
+  },
   "defaultThinkingLevel": "high",
   "hideThinkingBlock": false,
-  "defaultTools": ["+codemode"],
+  "defaultTools": [
+    "+codemode"
+  ],
   "retry": {
     "enabled": true,
     "maxRetries": 10,
