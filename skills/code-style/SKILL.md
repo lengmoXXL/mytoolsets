@@ -1,6 +1,6 @@
 ---
 name: code-style
-description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, mixed abstraction levels, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, unintuitive information order, or unrequested documentation.
+description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, mixed abstraction levels, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, duplicated flows, unintuitive information order, or unrequested documentation.
 ---
 
 # Code Style
@@ -28,11 +28,48 @@ Confirm the review range before checking.
 ### Minimal Implementation
 
 For each part in the review range, decide whether it must exist and whether it
-can be part of another existing entity instead. A small amount of duplication
-is acceptable; flag helpers and abstractions that carry no meaningful
-abstraction of their own, even when they have multiple call sites.
+can be part of another existing entity instead.
 
-#### Example: Single-Use Helper
+#### Example: Options for a Single Knob
+
+```go
+type Option func(*client)
+
+func WithTimeout(d time.Duration) Option {
+	return func(c *client) { c.timeout = d }
+}
+
+func New(addr string, opts ...Option) *client {
+	c := &client{addr: addr, timeout: 30 * time.Second}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
+}
+```
+
+The one caller writes `New(addr, WithTimeout(5*time.Second))`. With a single knob
+and a single caller, the `Option` type, its wrapper, and the loop only carry one
+value; pass it directly:
+
+```go
+func New(addr string, timeout time.Duration) *client {
+	return &client{addr: addr, timeout: timeout}
+}
+```
+
+### Reuse the Process, Not the Code
+
+Deduplicate at the flow level, not the code level. When two places run the
+same sequence of steps, define the sequence once and call it from both, so the
+process changes in one place. When only scattered fragments match, keep the
+duplication: a helper extracted from those fragments asserts a shared intent
+that does not exist, even when several call sites use it, while each flow keeps
+changing on its own.
+Flag those helpers, and flag a flow copied wholesale into a second caller
+instead of being called.
+
+#### Example: Reusing a Fragment
 
 ```go
 func putIfMissing(values map[string]string, key string, value string) {
@@ -41,14 +78,37 @@ func putIfMissing(values map[string]string, key string, value string) {
 	}
 }
 
-putIfMissing(values, key, value)
+func createRequest(name string) map[string]string {
+	params := map[string]string{"name": name}
+	putIfMissing(params, "type", "standard")
+	return params
+}
+
+func applyDefaults(settings map[string]string) map[string]string {
+	putIfMissing(settings, "region", "us-east-1")
+	return settings
+}
 ```
 
-This helper is usually unnecessary when it has one local call site. Inline it:
+The two functions share the same three-line check, not a process: one builds a
+request, the other completes loaded settings. The helper makes the flows look
+alike, while each default answers a different concern. Keep the check in each
+flow:
 
 ```go
-if _, ok := values[key]; !ok {
-	values[key] = value
+func createRequest(name string) map[string]string {
+	params := map[string]string{"name": name}
+	if _, ok := params["type"]; !ok {
+		params["type"] = "standard"
+	}
+	return params
+}
+
+func applyDefaults(settings map[string]string) map[string]string {
+	if _, ok := settings["region"]; !ok {
+		settings["region"] = "us-east-1"
+	}
+	return settings
 }
 ```
 
