@@ -105,6 +105,7 @@ configs/
 │   │   │   ├── flat-editor.ts.disabled
 │   │   │   ├── herdr-agent-state.ts  # herdr 状态上报集成（herdr 管理，升级时从 herdr integration install pi 重新同步）
 │   │   │   ├── link-pi-types.sh
+│   │   │   ├── nvim.ts  # /goal <目标>：在 Neovim 里推进一个目标，<F8>/:PiOptions 才给选项，连按排队
 │   │   │   ├── refine.ts
 │   │   │   └── tsconfig.json
 │   │   └── themes/
