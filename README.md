@@ -61,9 +61,9 @@ configs/
 │   │   ├── typescript-lsp.sh
 │   │   └── typos-lsp.sh
 │   └── skill/                  # skill 安装
+│       ├── archify.sh          # 画图 skill（固定 commit）+ ~/.agents/skills/archify
 │       ├── code-report.sh
 │       ├── code-style.sh
-│       ├── frontend-draw.sh
 │       └── neovim-skill.sh
 ├── configs/
 │   ├── agents/
@@ -117,9 +117,6 @@ configs/
 │   │   └── ...
 │   ├── code-style/
 │   │   └── ...
-│   ├── frontend-draw/
-│   │   └── ...
-│   └── publish-frontend-draw-assets.sh
 └── tools/
     ├── build-perf-to-profile.sh
     ├── common.sh                # install 脚本共享函数（confirm_update / managed block / write-if-changed）

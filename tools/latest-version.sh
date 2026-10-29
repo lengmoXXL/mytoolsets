@@ -18,7 +18,7 @@ Packages:
   PyPI            tldr
   crates.io       tree-sitter
   其他            go gopls node zig kimi
-  git commit      doc-research neovim-skill markdown-oxide
+  git commit      archify doc-research neovim-skill markdown-oxide
 EOF
 }
 
@@ -53,6 +53,7 @@ entry() {
         node) echo "node -" ;;
         zig) echo "zig -" ;;
         kimi) echo "kimi -" ;;
+        archify) echo "commit https://github.com/tt-a1i/archify.git" ;;
         doc-research) echo "commit https://github.com/lengmoXXL/doc-research.git" ;;
         neovim-skill) echo "commit https://github.com/lengmoXXL/neovim-skill.git" ;;
         markdown-oxide) echo "commit https://github.com/lengmoXXL/markdown-oxide.git" ;;
