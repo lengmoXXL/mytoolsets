@@ -134,6 +134,48 @@ The heading already says what the file is; the sentences add nothing. Delete
 them, or replace them with information the reader cannot see: prerequisites,
 side effects, or non-obvious options.
 
+### Hierarchy Mirrors the Logical Relation
+
+Levels match the concepts both ways: a parent names the category its children
+belong to, or states the rule they are cases of, and a group the content
+distinguishes occupies its own level. Flag a case beside the rule it
+specializes, and members of different groups at one rank. The case-beside-rule
+instance usually shows up as a cross-reference between the two siblings; a
+pointer that only narrows a rule's scope is not this defect.
+
+#### Example: Fields at One Rank That Belong at Two
+
+```go
+type Config struct {
+	Endpoint string
+	Timeout  time.Duration
+	Addr     string
+}
+```
+
+`Timeout` applies only to the HTTP endpoint, while `Addr` starts the gRPC
+server: three settings sit at one rank although the content has two groups.
+Give each group its own rank:
+
+```go
+type Config struct {
+	HTTP HTTPConfig
+	GRPC GRPCConfig
+}
+
+type HTTPConfig struct {
+	Endpoint string
+	Timeout  time.Duration
+}
+
+type GRPCConfig struct {
+	Addr string
+}
+```
+
+The rank now matches the relation: each setting sits under the thing it
+configures.
+
 ### Placement Matches Intent
 
 Each piece of content must live where a reader would look for it given its
@@ -195,7 +237,7 @@ Stays Together).
 
 Flag implementations that defer error handling or nest the happy path; this
 applies only to checks that must exist and never justifies adding new guards
-(see Over-Defensive Guards).
+(see One Owner Per Responsibility).
 
 #### Example: Deferred Error Branch
 
@@ -288,10 +330,35 @@ cleanest code is the code that does not do it. A comment earns its place only
 by giving the reason the code cannot, and only when that reason matters and is
 not obvious.
 
-### Over-Defensive Guards
+### One Owner Per Responsibility
 
-Flag checks that only protect against caller misuse or impossible
-states when the surrounding contract should already guarantee the invariant.
+Each duty has one owner. The stage that establishes an invariant tests it: later
+stages of the flow read the result instead of testing it again, and a callee
+relies on the precondition its caller guaranteed instead of re-checking it. Flag
+a check on an invariant something else already guarantees; the second owner
+drifts from the first and leaves two places to keep in step.
+
+#### Example: Re-Testing What the Constructor Established
+
+```go
+func Open(path string) (*Store, error) {
+	if path == "" {
+		return nil, errors.New("empty path")
+	}
+	return &Store{path: path}, nil
+}
+
+func (s *Store) Read() ([]byte, error) {
+	if s.path == "" {
+		return nil, errors.New("empty path")
+	}
+	return os.ReadFile(s.path)
+}
+```
+
+`Open` is the only way to obtain a `Store` and it rejects an empty path, so
+`Read` can never see one. The invariant belongs to `Open`; `Read` reads the
+result instead of repeating the check.
 
 #### Example: Go Nil Receiver Check
 
