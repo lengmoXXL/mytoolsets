@@ -1,6 +1,6 @@
 ---
 name: code-style
-description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, mixed abstraction levels, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, duplicated flows, unintuitive information order, or unrequested documentation.
+description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, duplicated flows, unintuitive information order, or unrequested documentation.
 ---
 
 # Code Style
@@ -134,16 +134,28 @@ The heading already says what the file is; the sentences add nothing. Delete
 them, or replace them with information the reader cannot see: prerequisites,
 side effects, or non-obvious options.
 
-### Hierarchy Mirrors the Logical Relation
+### Outline and Type Levels Mirror Containment
 
-Levels match the concepts both ways: a parent names the category its children
-belong to, or states the rule they are cases of, and a group the content
-distinguishes occupies its own level. Flag a case beside the rule it
-specializes, and members of different groups at one rank. The case-beside-rule
-instance usually shows up as a cross-reference between the two siblings; a
-pointer that only narrows a rule's scope is not this defect.
+In a document outline or a type definition, a level holds the rule its
+children are cases of, or the groups the content distinguishes. Flag a case
+beside the rule it specializes, and members of different groups sharing one
+level.
 
-#### Example: Fields at One Rank That Belong at Two
+#### Example: A Case Beside the Rule It Specializes
+
+```markdown
+## Retries
+
+Failed requests retry with backoff.
+
+## Rate limits
+
+Rate-limited requests retry with backoff too.
+```
+
+The second heading belongs below the first: it states one case of that rule.
+
+#### Example: Fields at Two Levels Collapsed Into One Level
 
 ```go
 type Config struct {
@@ -154,8 +166,8 @@ type Config struct {
 ```
 
 `Timeout` applies only to the HTTP endpoint, while `Addr` starts the gRPC
-server: three settings sit at one rank although the content has two groups.
-Give each group its own rank:
+server: three fields sit at one level although the content has two groups. Give
+each group its own level:
 
 ```go
 type Config struct {
@@ -173,8 +185,7 @@ type GRPCConfig struct {
 }
 ```
 
-The rank now matches the relation: each setting sits under the thing it
-configures.
+The levels now match the groups: each field sits inside the group it belongs to.
 
 ### Placement Matches Intent
 
@@ -402,26 +413,15 @@ If the requested behavior only uses `Endpoint`, the legacy field support is
 unnecessary unless the user asked to preserve old config files. Prefer removing
 the compatibility path.
 
-### Layers Keep Their Own Abstraction Level
+### Package Boundaries Earn Their Place
 
-Module design runs top-down: the requirements decide which operations exist,
-each operation is one package, and a package's public API decides the
-implementation behind it. Read from the outermost entry points and follow the
-imports inward; a package may reach only the API of the layer directly below
-it, and its code must be written in its own level's concepts.
-
-Flag boundaries the requirements do not justify. A split is wrong when one
-operation's flow crosses several packages whose callers must thread state
-between them, when packages only change together, or when a package holds only
-types or helpers that callers must combine into a complete operation. A merge
-is wrong when it joins packages with different requirements, callers, or axes
-of change because they touch the same data. The requirement is the test: an
-operation is one package, and a package below it exists only when it serves a
-requirement of its own or hides an external mechanism a test can replace.
-
-Flag any package that reaches past the API below into its implementation:
-building or picking apart a lower level's data representation, operating on its
-protocol or storage format, or performing a lower layer's job inline.
+In module design, one operation is one requirement. Flag a package that serves
+no requirement of its own and hides no external mechanism a test can replace.
+A split is wrong when one operation's flow crosses several packages whose
+callers must thread state between them, when packages only change together, or
+when a package holds only types or helpers that callers must combine into a
+complete operation. A merge is wrong when it joins packages with different
+requirements, callers, or axes of change because they touch the same data.
 
 #### Example: A Split the Requirement Decides Against
 
