@@ -4,14 +4,27 @@
 // reports findings, they are injected as a fix directive for the main agent, and
 // the work is re-checked after the fix turn. The loop exits when the check passes.
 
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { getAgentDir, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
 const STATUS_KEY = "refine";
-const MAX_ROUNDS = 30;
+const DEFAULT_MAX_ROUNDS = 30;
+const CONFIG_PATH = path.join(getAgentDir(), "refine.json");
 const CHECK_TIMEOUT_MS = 3_600_000;
 // Fallback when the delegation bridge never answers (pi-subagents not loaded).
 const NO_RESPONSE_TIMEOUT_MS = CHECK_TIMEOUT_MS + 30_000;
+
+const loadMaxRounds = (): number => {
+	try {
+		const value = (JSON.parse(readFileSync(CONFIG_PATH, "utf8")) as { maxRounds?: unknown }).maxRounds;
+		if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) return value;
+	} catch {
+		// Missing or unreadable config.
+	}
+	return DEFAULT_MAX_ROUNDS;
+};
 
 // pi-subagents delegation contract (src/api/delegation.ts); inline to avoid bare imports.
 const DELEGATION_REQUEST_EVENT = "prompt-template:subagent:request";
@@ -66,6 +79,7 @@ const FINDINGS_SCHEMA = {
 export default function (pi: ExtensionAPI) {
 	let criteria: string | undefined; // undefined = loop off
 	let round = 0;
+	let maxRounds = loadMaxRounds();
 	let pendingCheck = false;
 	let expectAbort = false; // the loop itself interrupted the current turn
 	let lastStopReason: string | undefined;
@@ -214,8 +228,8 @@ Report the verdict ONLY by calling the structured_output tool with
 			return;
 		}
 		round += 1;
-		if (round > MAX_ROUNDS) {
-			ctx.ui.notify(`refine: stopped after ${completedRound} rounds (max ${MAX_ROUNDS}); findings remain`, "warning");
+		if (round > maxRounds) {
+			ctx.ui.notify(`refine: stopped after ${completedRound} rounds (max ${maxRounds}); findings remain`, "warning");
 			reset(ctx);
 			return;
 		}
@@ -251,12 +265,31 @@ ${outcome.findings.map((finding, index) => `${index + 1}. ${finding}`).join("\n"
 	};
 
 	pi.registerCommand("refine", {
-		description: "Iteratively refine work against <prompt> as acceptance criteria; run without args to cancel",
+		description:
+			"Iteratively refine work against <prompt> as acceptance criteria; /refine set <n> sets the round limit; run without args to cancel",
 		handler: async (args, ctx) => {
 			const standard = args.trim();
+			const setRoundLimit = standard.match(/^set(?:\s+(\d+))?$/);
+			if (setRoundLimit) {
+				const value = setRoundLimit[1];
+				if (value === undefined) {
+					ctx.ui.notify(`refine: limit ${maxRounds} rounds (${CONFIG_PATH})`, "info");
+					return;
+				}
+				const rounds = Number(value);
+				if (!Number.isSafeInteger(rounds) || rounds < 1) {
+					ctx.ui.notify("Usage: /refine set <n>", "warning");
+					return;
+				}
+				maxRounds = rounds;
+				mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
+				writeFileSync(CONFIG_PATH, `${JSON.stringify({ maxRounds: rounds }, null, 2)}\n`);
+				ctx.ui.notify(`refine: limit ${rounds} rounds, saved to ${CONFIG_PATH}`, "info");
+				return;
+			}
 			if (!standard) {
 				if (criteria === undefined) {
-					ctx.ui.notify("Usage: /refine <acceptance criteria>", "info");
+					ctx.ui.notify("Usage: /refine <acceptance criteria> | /refine set <n>", "info");
 					return;
 				}
 				reset(ctx);
