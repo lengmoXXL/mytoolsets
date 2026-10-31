@@ -20,7 +20,7 @@ NPM_REGISTRY=""
 # 配置
 CONFIG_SOURCE="$SCRIPT_DIR/../configs/pi"
 CONFIG_TARGET="$HOME/.pi/agent"
-CONFIG_FILES="models.json settings.json pi-plan-mode.json zentui.json"
+CONFIG_FILES="settings.json pi-plan-mode.json zentui.json"
 
 usage() {
     cat << EOF

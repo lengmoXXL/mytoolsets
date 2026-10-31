@@ -37,6 +37,12 @@
       "maxRetries": 10
     }
   },
+  "compaction": {
+    "reserveTokens": 500000,
+    "modelOverrides": {
+      "openai-codex/gpt-6.1-sol": { "reserveTokens": 20000 }
+    }
+  },
   "enabledModels": [
     "deepseek/deepseek-flash",
     "qwen-token-plan-cn/deepseek-v4.1-flash",

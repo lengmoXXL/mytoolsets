@@ -94,7 +94,6 @@ configs/
 │   │           └── ...
 │   ├── pi/
 │   │   ├── auth.json
-│   │   ├── models.json
 │   │   ├── settings.json  # enabledModels 预留 openai-codex/gpt-6.1-sol，手动登录 openai 后生效（登录前启动会打 warning）
 │   │   ├── pi-plan-mode.json
 │   │   ├── zentui.json
