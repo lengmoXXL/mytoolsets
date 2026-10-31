@@ -81,7 +81,6 @@ export default function (pi: ExtensionAPI) {
 	let round = 0;
 	let maxRounds = loadMaxRounds();
 	let pendingCheck = false;
-	let expectAbort = false; // the loop itself interrupted the current turn
 	let lastStopReason: string | undefined;
 	let retriedRound: number | undefined; // round that already used its structured-output retry
 	let activeRequest: { requestId: string; ownerRunId: string; nodeId: string } | undefined;
@@ -102,7 +101,6 @@ export default function (pi: ExtensionAPI) {
 		criteria = undefined;
 		round = 0;
 		pendingCheck = false;
-		expectAbort = false;
 		lastStopReason = undefined;
 		retriedRound = undefined;
 		ctx.ui.setStatus(STATUS_KEY, undefined);
@@ -299,16 +297,14 @@ ${outcome.findings.map((finding, index) => `${index + 1}. ${finding}`).join("\n"
 			reset(ctx); // abandons any active loop and in-flight check
 			round = 1;
 			criteria = standard;
-			pendingCheck = true;
-			setStatus(ctx);
 			if (!ctx.isIdle()) {
-				expectAbort = true;
-				ctx.abort();
-				ctx.ui.notify("refine enabled: check starts when the current turn ends", "info");
+				// Arm the check without aborting the running turn.
+				pendingCheck = true;
+				setStatus(ctx);
+				ctx.ui.notify("refine enabled: check starts when the current turn settles", "info");
 				return;
 			}
-			pendingCheck = false;
-			ctx.ui.notify("refine enabled: checking against the criteria (round 1)", "info");
+			ctx.ui.notify("refine enabled: checking against the criteria", "info");
 			runCheck(ctx);
 		},
 	});
@@ -324,12 +320,8 @@ ${outcome.findings.map((finding, index) => `${index + 1}. ${finding}`).join("\n"
 
 	pi.on("agent_settled", (_event, ctx) => {
 		if (criteria === undefined || !pendingCheck) return;
-		// A user-interrupted fix turn pauses the loop; the check resumes after the next settled turn.
-		if (lastStopReason === "aborted" && !expectAbort) {
-			setStatus(ctx);
-			return;
-		}
-		expectAbort = false;
+		// A user-interrupted turn pauses the loop; the check resumes after the next settled turn.
+		if (lastStopReason === "aborted") return;
 		pendingCheck = false;
 		runCheck(ctx);
 	});
