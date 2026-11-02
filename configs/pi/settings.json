@@ -38,9 +38,9 @@
     }
   },
   "compaction": {
-    "reserveTokens": 500000,
+    "reserveTokens": 700000,
     "modelOverrides": {
-      "openai-codex/gpt-6.1-sol": { "reserveTokens": 20000 }
+      "openai-codex/gpt-6.1-sol": { "reserveTokens": 200000 }
     }
   },
   "enabledModels": [
