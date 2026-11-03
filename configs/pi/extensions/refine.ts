@@ -2,7 +2,8 @@
 // <prompt> is the acceptance standard. Each round forks the current context into a
 // read-only checker subagent via the pi-subagents delegation API; if the check
 // reports findings, they are injected as a fix directive for the main agent, and
-// the work is re-checked after the fix turn. The loop exits when the check passes.
+// the work is re-checked after the fix turn. The loop exits when a check reports
+// no findings.
 
 import { getAgentDir, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
@@ -53,14 +54,8 @@ interface DelegationResponse {
 	result?: { kind: "structured"; value?: unknown } | { kind: "text"; text: string };
 }
 
-interface CheckOutcome {
-	passed: boolean;
-	findings: string[];
-}
-
 interface RefineCheckData {
 	round: number;
-	passed?: boolean; // undefined = the check itself failed
 	findings: string[];
 	status: string;
 	error?: string;
@@ -69,10 +64,9 @@ interface RefineCheckData {
 const FINDINGS_SCHEMA = {
 	type: "object",
 	properties: {
-		passed: { type: "boolean" },
 		findings: { type: "array", items: { type: "string" } },
 	},
-	required: ["passed", "findings"],
+	required: ["findings"],
 	additionalProperties: false,
 };
 
@@ -112,18 +106,18 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerEntryRenderer<RefineCheckData>("refine-check", (entry, _meta, theme) => {
 		const data = entry.data!;
-		const header =
-			data.passed === undefined
-				? theme.fg("error", `refine R${data.round}: check failed (${data.status})`)
-				: data.passed || data.findings.length === 0
-					? theme.fg("success", `refine R${data.round}: criteria satisfied`)
-					: theme.fg("warning", `refine R${data.round}: ${data.findings.length} finding(s)`);
+		const failed = data.status !== "completed";
+		const header = failed
+			? theme.fg("error", `refine R${data.round}: check failed (${data.status})`)
+			: data.findings.length === 0
+				? theme.fg("success", `refine R${data.round}: criteria satisfied`)
+				: theme.fg("warning", `refine R${data.round}: ${data.findings.length} finding(s)`);
 		const box = new Box(1, 1);
 		box.addChild(new Text(header, 0, 0));
 		data.findings.forEach((finding, index) => {
 			box.addChild(new Text(theme.fg("muted", `${index + 1}. `) + finding, 0, 0));
 		});
-		if (data.passed === undefined && data.error) {
+		if (failed && data.error) {
 			box.addChild(new Text(theme.fg("error", data.error), 0, 0));
 		}
 		return box;
@@ -149,18 +143,23 @@ export default function (pi: ExtensionAPI) {
 Acceptance criteria:
 ${criteria}
 
-You have the parent session's conversation context. Inspect the current
-workspace state and verify whether the work satisfies ALL criteria.
-Go through the criteria ONE BY ONE and check each against the actual files;
-do not stop at the first issue. Earlier rounds' findings were not necessarily
-exhaustive, and reported ones are not necessarily fixed -- verify the full
-criteria list against the current state.
-Every round, if the criteria rely on a skill, reload its SKILL.md first;
-do not judge from memory of earlier rounds.
-A premature pass ends the loop with unfinished work; when in doubt, report a finding.
-Only report issues you can justify with evidence (cite file paths).
-Report the verdict ONLY by calling the structured_output tool with
-{ "passed": <boolean>, "findings": [<string>, ...] }; a prose-only final answer fails this step.`,
+If the criteria rely on a skill, reload its SKILL.md first.
+
+You have the parent session's conversation context. Judge every criterion
+against the actual files, and nothing else.
+
+A finding is either a class of defects (written as the class name, the criterion
+it violates, then its instances one per line as "path:line -- what is wrong
+there") or a criterion you cannot verify (written as that criterion plus what
+could not be verified, with no instance lines).
+
+Report every finding you have, and a class must list every instance of it:
+half-reported costs another whole round.
+
+In a later round, report a finding again unless a fix attempt resolved it or the
+parent rejected it with a reason that still holds.
+
+Report your findings ONLY by calling the structured_output tool.`,
 			context: "fork",
 			cwd: ctx.cwd,
 			// Per-run override: inherit the main session model.
@@ -206,21 +205,26 @@ Report the verdict ONLY by calling the structured_output tool with
 		// The delegation bridge schema-validates structured results before returning them.
 		const outcome =
 			response.status === "completed" && response.result?.kind === "structured"
-				? response.result.value as CheckOutcome
+				? response.result.value as Pick<RefineCheckData, "findings">
 				: undefined;
+		// The renderer reads only this status, so record the effective outcome, not the raw one.
+		const entryStatus = outcome
+			? "completed"
+			: response.status === "completed"
+				? "unstructured"
+				: response.status;
 		pi.appendEntry<RefineCheckData>("refine-check", {
 			round: completedRound,
-			passed: outcome?.passed,
 			findings: outcome?.findings ?? [],
-			status: response.status,
+			status: entryStatus,
 			error: response.error,
 		});
 		if (!outcome) {
-			ctx.ui.notify(`refine: check failed (${response.status}${response.error ? `: ${response.error}` : ""}), loop stopped`, "error");
+			ctx.ui.notify(`refine: check failed (${entryStatus}${response.error ? `: ${response.error}` : ""}), loop stopped`, "error");
 			reset(ctx);
 			return;
 		}
-		if (outcome.passed || outcome.findings.length === 0) {
+		if (outcome.findings.length === 0) {
 			ctx.ui.notify(`refine: criteria satisfied after round ${completedRound}`, "info");
 			reset(ctx);
 			return;
@@ -237,24 +241,34 @@ Report the verdict ONLY by calling the structured_output tool with
 			{
 				customType: "refine-control",
 				content: `<refine_control round="${completedRound}">
-Judge every finding below against the acceptance criteria before fixing anything:
-fix the real ones; for a finding you judge wrong, do not fix it and say plainly
-that you reject it and why (cite the file, line, or the criterion it misreads),
-so the next round does not raise it again; if you cannot tell whether a finding
-is right, do not guess -- ask the user with ask_user_question and act on the
-decision. Call it from a codemode script when it is not declared directly:
-\`await tools.ask_user_question({ questions: [{ header, id, question, options }] })\`,
-with 2-4 mutually exclusive options per question.
-A follow-up check runs automatically after this turn; do not restate the criteria
-or the findings you are fixing.
-After fixing, re-check every criterion yourself to ensure nothing is missed.
-If the criteria rely on a skill, reload its SKILL.md this round before fixing.
-
 Acceptance criteria:
 ${criteria}
 
 Findings from the round ${completedRound} check:
 ${outcome.findings.map((finding, index) => `${index + 1}. ${finding}`).join("\n")}
+
+If the criteria rely on a skill, reload its SKILL.md this round before fixing.
+
+Take the findings one at a time.
+
+A finding you judge wrong: say plainly that you reject it and why (cite the
+file, line, or the criterion it misreads), so the next round does not raise it
+again.
+
+A finding that reports a criterion which could not be verified has no instances:
+check it yourself and fix what it requires.
+
+If you cannot tell whether a finding is right, ask the user with ask_user_question,
+giving 2-4 mutually exclusive options per question, and act on the decision.
+
+For the finding you are on, search the same pattern elsewhere (sibling files,
+the same kind of comment or guard): fix EVERY instance that turns up, so the
+next round has nothing left of it.
+
+Say which instances beyond the reported ones you fixed.
+
+A follow-up check runs automatically after this turn; do not restate the criteria
+or the findings you are fixing.
 </refine_control>`,
 				display: false,
 			},
