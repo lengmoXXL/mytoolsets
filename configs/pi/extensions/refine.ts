@@ -265,6 +265,8 @@ For the finding you are on, search the same pattern elsewhere (sibling files,
 the same kind of comment or guard): fix EVERY instance that turns up, so the
 next round has nothing left of it.
 
+Verify each fix with its focused test, build, or bug reproduction, never the whole suite; if none exists, say so.
+
 Say which instances beyond the reported ones you fixed.
 
 A follow-up check runs automatically after this turn; do not restate the criteria
