@@ -17,13 +17,8 @@
     "npm:@narumitw/pi-plan-mode",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-zentui",
-    "npm:pi-compact-tools",
-    "npm:@calesennett/pi-codex-fast"
+    "npm:pi-compact-tools"
   ],
-  "pi-codex-fast": {
-    "enabled": true,
-    "mode": "fast"
-  },
   "defaultThinkingLevel": "high",
   "hideThinkingBlock": false,
   "defaultTools": [
@@ -38,17 +33,13 @@
     }
   },
   "compaction": {
-    "reserveTokens": 700000,
-    "modelOverrides": {
-      "openai-codex/gpt-6.1-sol": { "reserveTokens": 200000 }
-    }
+    "reserveTokens": 700000
   },
   "enabledModels": [
     "deepseek/deepseek-flash",
     "qwen-token-plan-cn/deepseek-v4.1-flash",
     "qwen-token-plan-cn/qwen3.8-max",
     "qwen-token-plan-cn/qwen3.8-flash",
-    "qwen-token-plan-cn/deepseek-v4.1-flash-1017",
-    "openai-codex/gpt-6.1-sol"
+    "qwen-token-plan-cn/deepseek-v4.1-flash-1017"
   ]
 }
