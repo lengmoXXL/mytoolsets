@@ -1,14 +1,15 @@
 ---
 name: code-style
-description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, duplicated flows, unintuitive information order, or unrequested documentation.
+description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, duplicated responsibilities, unintuitive information order, or unrequested documentation.
 ---
 
 # Code Style
 
 Use this skill to review code and documentation changes for necessity and
-arrangement; docs are reviewed as code. Every function, option, helper,
-abstraction, comment, file, dependency, section, paragraph, and sentence
-must earn its place.
+arrangement. Every function, option, helper, abstraction, comment, file,
+dependency, section, paragraph, and sentence must earn its place. Prose also
+has to be readable on its own: each term defined where it is used, each pronoun
+with one antecedent.
 
 ## Scope
 
@@ -58,81 +59,81 @@ func New(addr string, timeout time.Duration) *client {
 }
 ```
 
-### Reuse the Process, Not the Code
+### One Owner Per Responsibility
 
-Deduplicate at the flow level, not the code level. When two places run the
-same sequence of steps, define the sequence once and call it from both, so the
-process changes in one place. When only scattered fragments match, keep the
-duplication: a helper extracted from those fragments asserts a shared intent
-that does not exist, even when several call sites use it, while each flow keeps
-changing on its own.
-Flag those helpers, and flag a flow copied wholesale into a second caller
-instead of being called.
+A copy is work the code repeats. When the copies must stay identical, that work
+is a responsibility: the DRY rule (don't repeat yourself) gives it one owner,
+the code that does it.
 
-#### Example: Reusing a Fragment
+#### Example: A Second Writer for One Format
 
 ```go
-func putIfMissing(values map[string]string, key string, value string) {
-	if _, ok := values[key]; !ok {
-		values[key] = value
+type store struct{ path string }
+
+func (s *store) Save(v any) error {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
 	}
+	return os.WriteFile(s.path, data, 0o644)
 }
 
-func createRequest(name string) map[string]string {
-	params := map[string]string{"name": name}
-	putIfMissing(params, "type", "standard")
-	return params
+func (s *store) Dump(v any) error {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(s.path, data, 0o644)
 }
 
-func applyDefaults(settings map[string]string) map[string]string {
-	putIfMissing(settings, "region", "us-east-1")
-	return settings
+func (s *store) Load() (any, error) {
+	data, err := os.ReadFile(s.path)
+	if err != nil {
+		return nil, err
+	}
+	var v any
+	if err := json.Unmarshal(data, &v); err != nil {
+		return nil, err
+	}
+	return v, nil
 }
 ```
 
-The two functions share the same three-line check, not a process: one builds a
-request, the other completes loaded settings. The helper makes the flows look
-alike, while each default answers a different concern. Keep the check in each
-flow:
+`Load` decodes what `Save` writes, and `Dump`'s body is a copy of `Save`'s.
+Delete `Dump`.
+
+### Copies That Own No Responsibility
+
+A copy that repeats a value no other code uses carries no responsibility:
+nothing else depends on it, so it stays written out where it is, which is the
+DAMP rule (descriptive and meaningful phrases), and a helper built from such
+copies hides which value goes where, so flag it.
+
+A copy of a check another function already enforces owns no responsibility:
+delete the copy.
+
+#### Example: Deleting a Copy
 
 ```go
-func createRequest(name string) map[string]string {
-	params := map[string]string{"name": name}
-	if _, ok := params["type"]; !ok {
-		params["type"] = "standard"
+type blob struct{ path string }
+
+func Load(path string) ([]byte, error) {
+	if path == "" {
+		return nil, errors.New("empty path")
 	}
-	return params
+	return os.ReadFile(path)
 }
 
-func applyDefaults(settings map[string]string) map[string]string {
-	if _, ok := settings["region"]; !ok {
-		settings["region"] = "us-east-1"
+func (b *blob) Read() ([]byte, error) {
+	if b.path == "" {
+		return nil, errors.New("empty path")
 	}
-	return settings
+	return Load(b.path)
 }
 ```
 
-### One Intent Per Paragraph
-
-Every paragraph has exactly one primary intent. State that intent and stop;
-anything beyond it is excess. The reverse also holds: each intent is primarily
-described in at most one place. Flag content beyond the intent (delete it),
-paragraphs that mix two intents (split them), and one intent described primarily
-in multiple places (merge them). Typical excess: restating what the code, the
-UI, or an adjacent sentence already says, and pointers the reader did not ask
-for.
-
-#### Example: Restating the Code
-
-```markdown
-## install.sh
-
-This script installs the tool. Run it to install the tool.
-```
-
-The heading already says what the file is; the sentences add nothing. Delete
-them, or replace them with information the reader cannot see: prerequisites,
-side effects, or non-obvious options.
+`Load` rejects an empty path too, so dropping the check in `Read` leaves that
+error to `Load`.
 
 ### Outline and Type Levels Mirror Containment
 
@@ -246,9 +247,7 @@ Flag content that reads out of order: forward references, a sequence the reader
 must double back through, and unrelated threads interleaved (see Related Code
 Stays Together).
 
-Flag implementations that defer error handling or nest the happy path; this
-applies only to checks that must exist and never justifies adding new guards
-(see One Owner Per Responsibility).
+Flag implementations that defer error handling or nest the happy path.
 
 #### Example: Deferred Error Branch
 
@@ -336,60 +335,7 @@ func notify(order Order) error {
 ```
 
 The comment is 此地无银三百两: by announcing that the fallback is not there,
-it makes the reader wonder why one should be. If it should not exist, the
-cleanest code is the code that does not do it. A comment earns its place only
-by giving the reason the code cannot, and only when that reason matters and is
-not obvious.
-
-### One Owner Per Responsibility
-
-Each duty has one owner. The stage that establishes an invariant tests it: later
-stages of the flow read the result instead of testing it again, and a callee
-relies on the precondition its caller guaranteed instead of re-checking it. Flag
-a check on an invariant something else already guarantees; the second owner
-drifts from the first and leaves two places to keep in step.
-
-#### Example: Re-Testing What the Constructor Established
-
-```go
-func Open(path string) (*Store, error) {
-	if path == "" {
-		return nil, errors.New("empty path")
-	}
-	return &Store{path: path}, nil
-}
-
-func (s *Store) Read() ([]byte, error) {
-	if s.path == "" {
-		return nil, errors.New("empty path")
-	}
-	return os.ReadFile(s.path)
-}
-```
-
-`Open` is the only way to obtain a `Store` and it rejects an empty path, so
-`Read` can never see one. The invariant belongs to `Open`; `Read` reads the
-result instead of repeating the check.
-
-#### Example: Go Nil Receiver Check
-
-```go
-func (s *Store) Save(ctx context.Context, item Item) error {
-	if s == nil {
-		return errors.New("nil store")
-	}
-	return s.db.Save(ctx, item)
-}
-```
-
-If valid calls require a non-nil receiver, the caller should guarantee that
-precondition. Prefer removing the guard:
-
-```go
-func (s *Store) Save(ctx context.Context, item Item) error {
-	return s.db.Save(ctx, item)
-}
-```
+it makes the reader wonder why one should be, without saying why. Delete it.
 
 ### Compatibility Logic
 
