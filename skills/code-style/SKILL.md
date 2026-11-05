@@ -6,10 +6,7 @@ description: Minimalist style review for code, scripts, configuration, and docum
 # Code Style
 
 Use this skill to review code and documentation changes for necessity and
-arrangement. Every function, option, helper, abstraction, comment, file,
-dependency, section, paragraph, and sentence must earn its place. Prose also
-has to be readable on its own: each term defined where it is used, each pronoun
-with one antecedent.
+arrangement.
 
 ## Scope
 
@@ -28,8 +25,7 @@ Confirm the review range before checking.
 
 ### Minimal Implementation
 
-For each part in the review range, decide whether it must exist and whether it
-can be part of another existing entity instead.
+For each part in the review range, decide whether it must exist.
 
 #### Example: Options for a Single Knob
 
@@ -61,9 +57,9 @@ func New(addr string, timeout time.Duration) *client {
 
 ### One Owner Per Responsibility
 
-A copy is work the code repeats. When the copies must stay identical, that work
-is a responsibility: the DRY rule (don't repeat yourself) gives it one owner,
-the code that does it.
+A copy is work the code repeats. A responsibility is work with one owner, and
+the DRY rule (don't repeat yourself) keeps it that way: the copies call the
+owner instead of doing the work again.
 
 #### Example: A Second Writer for One Format
 
@@ -85,32 +81,20 @@ func (s *store) Dump(v any) error {
 	}
 	return os.WriteFile(s.path, data, 0o644)
 }
-
-func (s *store) Load() (any, error) {
-	data, err := os.ReadFile(s.path)
-	if err != nil {
-		return nil, err
-	}
-	var v any
-	if err := json.Unmarshal(data, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
 ```
 
-`Load` decodes what `Save` writes, and `Dump`'s body is a copy of `Save`'s.
+`Dump`'s body is a copy of `Save`'s, so one piece of work has two owners.
 Delete `Dump`.
 
 ### Copies That Own No Responsibility
 
-A copy that repeats a value no other code uses carries no responsibility:
-nothing else depends on it, so it stays written out where it is, which is the
-DAMP rule (descriptive and meaningful phrases), and a helper built from such
-copies hides which value goes where, so flag it.
+A copy that restates a value no other code uses carries no responsibility: it
+stays written out where it is, which is the DAMP rule (descriptive and
+meaningful phrases), and a helper built from such copies hides which value
+goes where, so flag it.
 
-A copy of a check another function already enforces owns no responsibility:
-delete the copy.
+A copy of a check another function already enforces is deleted: that function
+owns the responsibility.
 
 #### Example: Deleting a Copy
 
@@ -241,7 +225,8 @@ holding something unresolved.
 Then keep the thread continuous: a reader follows content one step at a time
 and cannot take a step whose prerequisite arrives later. Put what a step
 depends on before the step: prerequisites before the procedure, purpose before
-mechanism, a term before its first use, a value before the operation on it.
+mechanism, a term before its first use, an antecedent before the pronoun that
+stands for it, a value before the operation on it.
 
 Flag content that reads out of order: forward references, a sequence the reader
 must double back through, and unrelated threads interleaved (see Related Code
@@ -458,8 +443,9 @@ Use this format for each finding:
 
 ```text
 <file>:<line>
-判断：<specific part> 不必要，或位置、次序、拆分与合并不当
-原因：<为何它不必要、该换位置或次序，或该拆分/合并>
+规则：<the rule under ## Checks it violates>
+说明：<what it violates, quoting the code or sentence>
 ```
 
-Keep reasons specific to the reviewed range. Avoid general style essays.
+A finding that violates no rule is not reported. Keep the explanation specific
+to the reviewed range, and avoid general style essays.
