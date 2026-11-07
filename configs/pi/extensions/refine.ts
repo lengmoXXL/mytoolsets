@@ -1,10 +1,3 @@
-// /refine <prompt>: iterative refinement loop against acceptance criteria.
-// <prompt> is the acceptance standard. Each round forks the current context into a
-// read-only checker subagent via the pi-subagents delegation API; if the check
-// reports findings, they are injected as a fix directive for the main agent, and
-// the work is re-checked after the fix turn. The loop exits when a check reports
-// no findings.
-
 import { getAgentDir, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -21,9 +14,7 @@ const loadMaxRounds = (): number => {
 	try {
 		const value = (JSON.parse(readFileSync(CONFIG_PATH, "utf8")) as { maxRounds?: unknown }).maxRounds;
 		if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) return value;
-	} catch {
-		// Missing or unreadable config.
-	}
+	} catch {}
 	return DEFAULT_MAX_ROUNDS;
 };
 
@@ -76,13 +67,12 @@ export default function (pi: ExtensionAPI) {
 	let maxRounds = loadMaxRounds();
 	let pendingCheck = false;
 	let lastStopReason: string | undefined;
-	let retriedRound: number | undefined; // round that already used its structured-output retry
+	let retriedRound: number | undefined;
 	let activeRequest: { requestId: string; ownerRunId: string; nodeId: string } | undefined;
 	let activeTimer: ReturnType<typeof setTimeout> | undefined;
 	const waiters = new Map<string, (response: DelegationResponse) => void>();
 
 	const reset = (ctx: ExtensionContext) => {
-		// Abandon any in-flight check: tell the bridge, drop its waiter, stop its fallback timer.
 		if (activeRequest) {
 			pi.events.emit(DELEGATION_CANCEL_EVENT, { ...activeRequest });
 			waiters.delete(activeRequest.requestId);
@@ -143,26 +133,22 @@ export default function (pi: ExtensionAPI) {
 Acceptance criteria:
 ${criteria}
 
-If the criteria rely on a skill, reload its SKILL.md first.
+Use the parent conversation for context and check the current work. Read any
+instructions referenced by the criteria and follow their scope, review order,
+and reporting requirements.
 
-You have the parent session's conversation context. Judge every criterion
-against the actual files, and nothing else.
+Return only unresolved findings that require action under the criteria. Exclude
+passing checks, withdrawn concerns, and commentary from the findings array.
+Consider previous fixes and rejections; repeat a finding only if it remains
+valid, explaining why any previous rejection no longer applies.
 
-A finding is either a class of defects (written as the class name, the criterion
-it violates, then its instances one per line as "path:line -- what is wrong
-there") or a criterion you cannot verify (written as that criterion plus what
-could not be verified, with no instance lines).
+If a criterion cannot be verified, include it in findings with the reason so
+the parent can address it. Return empty findings only when the work satisfies
+the criteria under their review procedure.
 
-Report every finding you have, and a class must list every instance of it:
-half-reported costs another whole round.
-
-In a later round, report a finding again unless a fix attempt resolved it or the
-parent rejected it with a reason that still holds.
-
-Report your findings ONLY by calling the structured_output tool.`,
+Return the result ONLY by calling the structured_output tool.`,
 			context: "fork",
 			cwd: ctx.cwd,
-			// Per-run override: inherit the main session model.
 			model: ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : undefined,
 			timeoutMs: CHECK_TIMEOUT_MS,
 			result: { kind: "structured", schema: FINDINGS_SCHEMA },
@@ -171,13 +157,10 @@ Report your findings ONLY by calling the structured_output tool.`,
 		// Install the timer and waiter before emitting: the bridge can synchronously answer
 		// invalid_request/unavailable_context during the emit itself.
 		new Promise<DelegationResponse>((resolve) => {
-			waiters.set(requestId, (response) => {
-				resolve(response);
-			});
+			waiters.set(requestId, resolve);
 			activeTimer = setTimeout(() => {
+				if (activeRequest?.requestId !== requestId) return;
 				waiters.delete(requestId);
-				activeRequest = undefined;
-				activeTimer = undefined;
 				onCheckDone(ctx, {
 					requestId,
 					status: "timeout",
@@ -185,6 +168,7 @@ Report your findings ONLY by calling the structured_output tool.`,
 				});
 			}, NO_RESPONSE_TIMEOUT_MS);
 		}).then((response) => {
+			if (activeRequest?.requestId !== requestId) return;
 			clearTimeout(activeTimer);
 			activeRequest = undefined;
 			activeTimer = undefined;
@@ -196,7 +180,6 @@ Report your findings ONLY by calling the structured_output tool.`,
 	const onCheckDone = (ctx: ExtensionContext, response: DelegationResponse): void => {
 		const completedRound = round;
 		if (response.status === "structured_output_failed" && retriedRound !== completedRound) {
-			// The reviewer ended with prose instead of calling structured_output; retry once per round.
 			retriedRound = completedRound;
 			ctx.ui.notify(`refine: round ${completedRound} check missed structured_output, retrying once`, "warning");
 			runCheck(ctx);
@@ -247,30 +230,12 @@ ${criteria}
 Findings from the round ${completedRound} check:
 ${outcome.findings.map((finding, index) => `${index + 1}. ${finding}`).join("\n")}
 
-If the criteria rely on a skill, reload its SKILL.md this round before fixing.
+Read any instructions referenced by the criteria. Review these findings against
+the criteria and current work before changing anything. Address the findings
+you accept; explain any you reject so the next check can take that into account.
+Follow the criteria's scope, workflow, and validation requirements.
 
-Take the findings one at a time.
-
-A finding you judge wrong: say plainly that you reject it and why (cite the
-file, line, or the criterion it misreads), so the next round does not raise it
-again.
-
-A finding that reports a criterion which could not be verified has no instances:
-check it yourself and fix what it requires.
-
-If you cannot tell whether a finding is right, ask the user with ask_user_question,
-giving 2-4 mutually exclusive options per question, and act on the decision.
-
-For the finding you are on, search the same pattern elsewhere (sibling files,
-the same kind of comment or guard): fix EVERY instance that turns up, so the
-next round has nothing left of it.
-
-Verify each fix with its focused test, build, or bug reproduction, never the whole suite; if none exists, say so.
-
-Say which instances beyond the reported ones you fixed.
-
-A follow-up check runs automatically after this turn; do not restate the criteria
-or the findings you are fixing.
+A follow-up check runs automatically after this turn settles.
 </refine_control>`,
 				display: false,
 			},
@@ -310,11 +275,10 @@ or the findings you are fixing.
 				ctx.ui.notify("refine loop cancelled", "info");
 				return;
 			}
-			reset(ctx); // abandons any active loop and in-flight check
+			reset(ctx);
 			round = 1;
 			criteria = standard;
 			if (!ctx.isIdle()) {
-				// Arm the check without aborting the running turn.
 				pendingCheck = true;
 				setStatus(ctx);
 				ctx.ui.notify("refine enabled: check starts when the current turn settles", "info");
