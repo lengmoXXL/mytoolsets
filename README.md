@@ -95,6 +95,7 @@ configs/
 │   ├── pi/
 │   │   ├── auth.json
 │   │   ├── settings.json
+│   │   ├── models.json
 │   │   ├── pi-plan-mode.json
 │   │   ├── zentui.json
 │   │   ├── agents/
