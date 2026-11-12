@@ -55,8 +55,8 @@ export default {
   ],
   keys: {
     '<leader>hw': { command: 'hello', desc: 'Hello World', global: true },
-    '<leader>bf': { command: 'worktree.fork', desc: 'fork：建 worktree', global: true },
-    '<leader>bd': { command: 'worktree.remove', desc: '删 worktree 和分支', global: true },
+    '<leader>bf': { command: 'worktree.fork', desc: 'fork：建 worktree 并开工作区', global: true },
+    '<leader>bd': { command: 'worktree.remove', desc: '删 worktree、分支与工作区', global: true },
   },
   commands: {
     // 问一下名字，再把问候说在窗口右下角；Esc 取消就什么都不做。
@@ -79,7 +79,8 @@ export default {
       const exists = (await git('rev-parse', '--verify', '--quiet', `refs/heads/${branch}`)).code === 0;
       const added = exists ? await git('worktree', 'add', dir, branch) : await git('worktree', 'add', '-b', branch, dir);
       if (added.code !== 0) return ctx.notify(added.stderr.trim());
-      ctx.notify(`已创建 ${dir}（分支 ${branch}）`);
+      await ctx.request('terminal-agent', 'workspace-create', { key: at.machine.id, cwd: dir });
+      ctx.notify(`已创建 ${dir}（分支 ${branch}），工作区已打开`);
     },
     // 选一个 worktree，连目录带分支一起删；有未提交改动导致移除失败时，再问一次要不要强制。
     'worktree.remove': async (ctx) => {
@@ -107,6 +108,13 @@ export default {
         if (force !== '强制删除') return;
         removed = await git(main.path, 'worktree', 'remove', '--force', target.path);
         if (removed.code !== 0) return ctx.notify(removed.stderr.trim());
+      }
+      // worktree 已删：关掉同机器上 cwd 落在其中的 workspace
+      const { workspaces } = await ctx.request('terminal-agent', 'config') as { workspaces: { id: string; machineId: string; cwd?: string }[] };
+      for (const w of workspaces) {
+        if (w.machineId === at.machine.id && w.cwd && (w.cwd === target.path || w.cwd.startsWith(`${target.path}/`))) {
+          await ctx.request('terminal-agent', 'workspace-close', { id: w.id });
+        }
       }
       if (target.branch) {
         const dropped = await git(main.path, 'branch', '-D', target.branch);
