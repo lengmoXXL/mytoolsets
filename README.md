@@ -44,6 +44,7 @@ configs/
 │   ├── tmux.sh                # tmux + 配置（~/.tmux.conf、TPM）
 │   ├── tree-sitter.sh
 │   ├── uv.sh
+│   ├── wangcai-config.sh      # 旺财配置（init.ts 同步；local.ts 机器相关，缺失才生成）
 │   ├── compiler/               # 语言编译器/运行时
 │   │   ├── clang.sh
 │   │   ├── go.sh
@@ -110,8 +111,11 @@ configs/
 │   │   │   └── tsconfig.json
 │   │   └── themes/
 │   │       └── gray.json
-│   └── tmux/
-│       └── tmux.conf
+│   ├── tmux/
+│   │   └── tmux.conf
+│   └── wangcai/
+│       ├── init.ts
+│       └── local.ts
 ├── skills/
 │   ├── code-report/
 │   │   └── ...
