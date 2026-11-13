@@ -109,6 +109,8 @@ configs/
 │   │   │   ├── nvim.ts  # /goal <目标>：在 Neovim 里推进一个目标，<F8>/:PiOptions 才给选项，连按排队
 │   │   │   ├── refine.ts
 │   │   │   └── tsconfig.json
+│   │   ├── patches/
+│   │   │   └── pi-computer-use.patch  # pi 1.5.2 兼容补丁（pi.sh 幂等重打）
 │   │   └── themes/
 │   │       └── gray.json
 │   ├── tmux/
