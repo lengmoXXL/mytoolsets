@@ -17,8 +17,7 @@
     "npm:@narumitw/pi-plan-mode",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-zentui",
-    "npm:pi-compact-tools",
-    "git:github.com/swairshah/pi-computer-use"
+    "npm:pi-compact-tools"
   ],
   "defaultThinkingLevel": "high",
   "hideThinkingBlock": false,

@@ -107,7 +107,7 @@ if ! node_ready; then
     exit 1
 fi
 
-for dep in grep head rsync git; do
+for dep in grep head rsync; do
     if ! command -v "$dep" &>/dev/null; then
         echo "错误: 缺少依赖 $dep" >&2
         exit 1
@@ -210,34 +210,6 @@ if [[ -n "$ext_changes" ]]; then
     fi
 else
     echo "$CONFIG_TARGET/extensions 未变化"
-fi
-
-# ---- pi-computer-use 兼容补丁 ----
-# 第三方包；pi 1.5.2 移除 modelRegistry.getApiKey，补丁改走 modelRegistry.complete。
-# 包已在 settings.json 声明；这里确保已安装并幂等重打补丁（pi update 会重置 clone）。
-COMPUSE_REPO="git:github.com/swairshah/pi-computer-use"
-COMPUSE_DIR="$CONFIG_TARGET/git/github.com/swairshah/pi-computer-use"
-COMPUSE_PATCH="$CONFIG_SOURCE/patches/pi-computer-use.patch"
-if [[ -f "$COMPUSE_PATCH" ]]; then
-    if [[ ! -d "$COMPUSE_DIR/.git" ]]; then
-        if [[ "$UPDATE" == "1" ]]; then
-            echo "未安装，跳过: pi-computer-use"
-        else
-            echo "安装 pi-computer-use..."
-            "$PI_BIN" install "$COMPUSE_REPO" || echo "警告: pi-computer-use 安装失败，pi 启动时会自动装" >&2
-        fi
-    fi
-    if [[ -d "$COMPUSE_DIR/.git" ]]; then
-        if git -C "$COMPUSE_DIR" apply --reverse --check "$COMPUSE_PATCH" &>/dev/null; then
-            echo "pi-computer-use 补丁已应用"
-        elif [[ "$UPDATE" != "1" ]] || confirm_update "pi-computer-use 兼容补丁"; then
-            if git -C "$COMPUSE_DIR" apply "$COMPUSE_PATCH"; then
-                echo "pi-computer-use 补丁已打上"
-            else
-                echo "警告: pi-computer-use 补丁无法应用，上游可能已改动" >&2
-            fi
-        fi
-    fi
 fi
 
 echo ""
