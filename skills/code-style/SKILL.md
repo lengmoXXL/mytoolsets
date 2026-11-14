@@ -65,14 +65,13 @@ that must change to resolve it, not by how many files the edit touches:
 changing a function signature is function-level even when its callers span
 several files.
 
-When a level has findings, finish checking that level and defer lower levels.
-For a review-only request, return all findings at that level and wait until
-they have been addressed before starting another round.
+Check every applicable level in one pass and report all findings together; do
+not defer lower levels.
 
-When fixes are requested, fix the current level and start another round.
-Recheck the updated code from the largest level, since structural changes can
-invalidate earlier judgments. Continue within the authorized scope until all
-applicable levels pass or further work needs user input.
+When fixes are requested, fix the reported findings and recheck the updated
+code from the largest level, since structural changes can invalidate earlier
+judgments. Continue within the authorized scope until all applicable levels
+pass or further work needs user input.
 
 ## Checks
 
@@ -491,9 +490,9 @@ it makes the reader wonder why one should be, without saying why. Delete it.
 
 ## Output
 
-For a review, state the current level and report only that level's findings.
-If lower levels were deferred, say they have not yet been reviewed. Say there
-are no findings only after all applicable levels pass.
+For a review, report findings from all applicable levels, grouped by level
+from largest to smallest. Say there are no findings only after all applicable
+levels pass.
 
 Use this format for each finding:
 
@@ -507,4 +506,4 @@ A finding that violates no rule is not reported. Keep the explanation specific
 to the reviewed range, and avoid general style essays.
 
 When fixes are requested, summarize the changes, validation, and any remaining
-findings or deferred levels.
+findings.
