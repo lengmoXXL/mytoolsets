@@ -54,17 +54,10 @@ export default {
     { id: 'terminal', repo: 'https://github.com/lengmoXXL/WangCai-terminal' },
   ],
   keys: {
-    '<leader>hw': { command: 'hello', desc: 'Hello World', global: true },
-    '<leader>bf': { command: 'worktree.fork', desc: 'fork：建 worktree 并开工作区', global: true },
-    '<leader>bd': { command: 'worktree.remove', desc: '删 worktree、分支与工作区', global: true },
+    '<leader>bf': { command: 'worktree.fork', desc: ['worktree', 'fork'], global: true },
+    '<leader>bd': { command: 'worktree.remove', desc: ['worktree', '删除'], global: true },
   },
   commands: {
-    // 问一下名字，再把问候说在窗口右下角；Esc 取消就什么都不做。
-    hello: async ({ input, notify }) => {
-      const name = await input({ title: '你叫什么名字', value: 'World' });
-      if (name === undefined) return;
-      notify(`Hello, ${name}!`);
-    },
     // 输入分支名，在仓库旁边建 worktree：目录是 仓库名-分支名，分支里的 / 换成 -，不会多出目录层级。
     // 分支已存在就检出它，不存在就从当前 HEAD 建。
     'worktree.fork': async (ctx) => {
