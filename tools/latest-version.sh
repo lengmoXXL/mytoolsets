@@ -13,7 +13,7 @@ usage() {
 
 Packages:
   GitHub release  ripgrep(rg) fzf fd cmake tmux nvim uv codex herdr
-                  lua-lsp starpls typos-lsp(typos) rust sarasa aurulent droid
+                  lua-lsp clice starpls typos-lsp(typos) rust sarasa aurulent droid
   npm             pi-agent(pi) pnpm playwright typescript-lsp bash-lsp pyright
   PyPI            tldr
   crates.io       tree-sitter
@@ -35,6 +35,7 @@ entry() {
         codex) echo "gh openai/codex" ;;
         herdr) echo "gh herdrdev/herdr" ;;
         lua-lsp | lua-language-server) echo "gh LuaLS/lua-language-server" ;;
+        clice) echo "gh clice-io/clice" ;;
         starpls) echo "gh withered-magic/starpls" ;;
         typos-lsp | typos) echo "gh tekumara/typos-lsp" ;;
         rust) echo "gh rust-lang/rust" ;;
@@ -62,7 +63,7 @@ entry() {
     esac
 }
 
-ALL_PACKAGES="ripgrep fzf fd cmake tmux nvim uv codex herdr lua-lsp starpls
+ALL_PACKAGES="ripgrep fzf fd cmake tmux nvim uv codex herdr lua-lsp clice starpls
 typos-lsp rust pi-agent pnpm playwright typescript-lsp bash-lsp pyright tldr tree-sitter
 go gopls node zig kimi doc-research neovim-skill markdown-oxide sarasa aurulent droid"
 

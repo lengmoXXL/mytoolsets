@@ -54,6 +54,7 @@ configs/
 │   │   └── zig.sh
 │   ├── lsp/
 │   │   ├── bash-lsp.sh
+│   │   ├── clice.sh
 │   │   ├── lua-lsp.sh
 │   │   ├── markdown-oxide.sh
 │   │   ├── pyright-lsp.sh
