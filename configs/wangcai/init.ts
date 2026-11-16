@@ -47,7 +47,12 @@ export default {
     // 目录遍历归它：点一个文件就发 onclick，由 editor 接住。
     { id: 'files', repo: 'https://github.com/lengmoXXL/WangCai-files' },
     // 一次读一个文件：语言服务、vim 键，点页头的「预览」把文件交给 preview。
-    { id: 'editor', repo: 'https://github.com/lengmoXXL/WangCai-editor' },
+    { id: 'editor', repo: 'https://github.com/lengmoXXL/WangCai-editor',
+      config: { lsp: {
+        c: { command: ['clice', 'serve'] },
+        cpp: { command: ['clice', 'serve'] },
+      } },
+    },
     // 图片、Markdown 与 HTML 由它渲染。
     { id: 'preview', repo: 'https://github.com/lengmoXXL/WangCai-preview' },
     { id: 'git', repo: 'https://github.com/lengmoXXL/WangCai-git' },
