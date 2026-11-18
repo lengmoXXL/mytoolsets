@@ -4,13 +4,13 @@
     "qwen-token-plan-cn": {
       "models": [
         {
-          "id": "qwen4-max-preview",
-          "name": "Qwen4 Max Preview",
+          "id": "qwen4-max",
+          "name": "Qwen4 Max",
           "reasoning": true,
           "input": ["text", "image"],
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
           "contextWindow": 1000000,
-          "maxTokens": 131072,
+          "maxTokens": 262144,
           "compat": {
             "thinkingFormat": "qwen",
             "supportsDeveloperRole": false,
