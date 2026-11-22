@@ -25,7 +25,6 @@ configs/
 │   ├── ghostty-terminfo.sh
 │   ├── git-prune-merged.sh
 │   ├── herdr.sh               # Herdr + 配置（configs/herdr/config.toml）
-│   ├── kimi.sh                # Kimi Code CLI + 主题（configs/kimi/themes）
 │   ├── nvim.sh                # Neovim + 配置（configs/nvim）
 │   ├── nvim-ft.sh
 │   ├── ossutil.sh
@@ -77,9 +76,6 @@ configs/
 │   │   └── config
 │   ├── herdr/
 │   │   └── config.toml
-│   ├── kimi/
-│   │   └── themes/
-│   │       └── gray.json
 │   ├── nvim/
 │   │   ├── init.lua
 │   │   └── lua/
@@ -110,7 +106,8 @@ configs/
 │   │   │   ├── refine.ts
 │   │   │   └── tsconfig.json
 │   │   └── themes/
-│   │       └── gray.json
+│   │       ├── gray.json
+│   │       └── gray-light.json
 │   ├── starship/
 │   │   └── starship.toml
 │   ├── tmux/

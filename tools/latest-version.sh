@@ -1,6 +1,6 @@
 #!/bin/bash
 # 查询工具的上游最新版本
-# 来源: GitHub release / npm / npm next / PyPI / crates.io / go / node / zig / kimi / git commit
+# 来源: GitHub release / npm / npm next / PyPI / crates.io / go / node / zig / git commit
 
 set -euo pipefail
 
@@ -17,7 +17,7 @@ Packages:
   npm             pi-agent(pi) pnpm playwright typescript-lsp bash-lsp pyright
   PyPI            tldr
   crates.io       tree-sitter
-  其他            go gopls node zig kimi
+  其他            go gopls node zig
   git commit      archify doc-research neovim-skill markdown-oxide
 EOF
 }
@@ -54,7 +54,6 @@ entry() {
         gopls) echo "gopls -" ;;
         node) echo "node -" ;;
         zig) echo "zig -" ;;
-        kimi) echo "kimi -" ;;
         archify) echo "commit https://github.com/tt-a1i/archify.git" ;;
         doc-research) echo "commit https://github.com/lengmoXXL/doc-research.git" ;;
         neovim-skill) echo "commit https://github.com/lengmoXXL/neovim-skill.git" ;;
@@ -66,7 +65,7 @@ entry() {
 
 ALL_PACKAGES="ripgrep fzf fd cmake tmux nvim uv codex herdr starship lua-lsp clice starpls
 typos-lsp rust pi-agent pnpm playwright typescript-lsp bash-lsp pyright tldr tree-sitter
-go gopls node zig kimi doc-research neovim-skill markdown-oxide sarasa aurulent droid"
+go gopls node zig doc-research neovim-skill markdown-oxide sarasa aurulent droid"
 
 latest() {
     local source="$1" target="$2"
@@ -104,7 +103,6 @@ latest() {
             curl -fsSL --max-time 30 "https://ziglang.org/download/index.json" |
                 python3 -c 'import json, sys; print([k for k in json.load(sys.stdin) if k != "master"][0])'
             ;;
-        kimi) curl -fsSL --max-time 20 "https://code.kimi.com/kimi-code/latest" ;;
         commit) git ls-remote "$target" HEAD | cut -f1 ;;
     esac
 }
