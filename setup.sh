@@ -50,11 +50,7 @@ case "$MODE" in
     init)
         # 基础配置: secrets、shell 环境（env.d）、pi agent、python
         run "$ROOT/tools/secrets.sh" init
-        if [[ "$(uname -s)" == "Darwin" ]]; then
-            run "$ROOT/install/oh-my-zsh.sh"
-        else
-            run "$ROOT/install/oh-my-bash.sh"
-        fi
+        run "$ROOT/install/starship.sh"
         run "$ROOT/install/compiler/node.sh"
         run "$ROOT/install/pi.sh"
         run python3 "$ROOT/install/pi-auth.py"

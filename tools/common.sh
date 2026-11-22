@@ -95,19 +95,6 @@ write_managed_block() {
     echo "$file ($name) 已更新"
 }
 
-# strip_block <file> <start_regex> <end_regex>: 删除匹配区间（含首尾行），
-# 用于清理无 guard 的旧写法
-strip_block() {
-    local file="$1"
-    local start="$2"
-    local end="$3"
-    local tmp_file
-    tmp_file="$(mktemp)"
-    sed "/$start/,/$end/d" "$file" > "$tmp_file"
-    mv "$tmp_file" "$file"
-}
-
-
 # write_file_if_changed <dest> <content_file>: 内容一致跳过；
 # --update 下不一致先确认；不一致时覆盖 dest（dest 父目录自动创建）
 write_file_if_changed() {

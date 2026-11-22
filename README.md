@@ -28,8 +28,6 @@ configs/
 │   ├── kimi.sh                # Kimi Code CLI + 主题（configs/kimi/themes）
 │   ├── nvim.sh                # Neovim + 配置（configs/nvim）
 │   ├── nvim-ft.sh
-│   ├── oh-my-bash.sh           # Linux: Oh My Bash + ~/.bashrc（env.d 加载、PATH）
-│   ├── oh-my-zsh.sh            # macOS: Oh My Zsh + ~/.zshrc（env.d 加载、PATH）
 │   ├── ossutil.sh
 │   ├── perf-to-profile.sh
 │   ├── pi.sh                  # Pi CLI（npm 固定版本）+ 配置与自研 extensions
@@ -39,6 +37,7 @@ configs/
 │   ├── pnpm.sh                # pnpm（npm 固定版本）
 │   ├── prd.sh
 │   ├── ripgrep.sh
+│   ├── starship.sh             # Starship 提示符 + 最简配置；接管 shell 托管块，检测到 Oh My Zsh / Oh My Bash 先卸载
 │   ├── style-check.sh
 │   ├── tldr.sh
 │   ├── tmux.sh                # tmux + 配置（~/.tmux.conf、TPM）
@@ -112,6 +111,8 @@ configs/
 │   │   │   └── tsconfig.json
 │   │   └── themes/
 │   │       └── gray.json
+│   ├── starship/
+│   │   └── starship.toml
 │   ├── tmux/
 │   │   └── tmux.conf
 │   └── wangcai/

@@ -15,7 +15,7 @@ usage() {
 用法: $0 [--remove] [--update]
 
 选项:
-  --remove  卸载 clash-for-linux 及 .bashrc 配置
+  --remove  卸载 clash-for-linux
   --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
@@ -48,7 +48,6 @@ done
 if [[ "$REMOVE" == "1" ]]; then
     confirm_remove "clash-for-linux" || exit 0
     remove_dir "$INSTALL_DIR"
-    remove_managed_block "$HOME/.bashrc" noclobber-off
     echo "提示: 官方 install.sh 做的系统级改动（/opt、systemd 等）未清理，请按需手动处理"
     exit 0
 fi
@@ -91,21 +90,3 @@ fi
 echo "执行安装脚本..."
 cd "$INSTALL_DIR"
 bash install.sh
-
-# 在 .bashrc 中关闭 noclobber（oh-my-bash 默认开启会导致文件覆盖报错）
-BASHRC="${HOME}/.bashrc"
-
-# 旧版标记不同名，直接删除，改用 managed block
-if ! grep -qF '# BEGIN configs noclobber-off' "$BASHRC" 2>/dev/null \
-    && grep -qF '# noclobber-off START' "$BASHRC" 2>/dev/null; then
-    strip_block "$BASHRC" '^# noclobber-off START$' '^# noclobber-off END$'
-fi
-
-noclobber_block="$(mktemp)"
-cat > "$noclobber_block" << 'EOF'
-# 关闭 noclobber，允许 > 覆盖已存在文件
-set +o noclobber
-EOF
-write_managed_block "$BASHRC" noclobber-off "$noclobber_block"
-rm -f "$noclobber_block"
-

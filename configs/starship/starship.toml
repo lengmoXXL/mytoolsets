@@ -1,0 +1,4 @@
+# 只写与默认值不同的项；完整生效配置用 starship print-config 查看
+add_newline = false
+# 默认 500ms，大仓库里容易超时
+command_timeout = 1000
