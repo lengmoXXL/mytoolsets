@@ -1,5 +1,5 @@
 #!/bin/bash
-# 安装 Starship 提示符与最简配置，并接管 shell 配置（macOS 写 ~/.zshrc，Linux 写 ~/.bashrc）
+# 安装 Starship 提示符与预设配置，并接管 shell 配置（macOS 写 ~/.zshrc，Linux 写 ~/.bashrc）
 # 检测到 Oh My Zsh / Oh My Bash 先卸载：prompt 归 starship，两个框架不再需要
 
 set -e
@@ -16,7 +16,7 @@ usage() {
     cat << EOF
 用法: $0 [--remove] [--update]
 
-安装 Starship ${STARSHIP_VERSION} 到 ${BIN_DIR}/starship，同步最简配置到
+安装 Starship ${STARSHIP_VERSION} 到 ${BIN_DIR}/starship，同步预设配置到
 ${CONFIG_FILE}，并写入 shell 托管块（历史、补全、env.d 加载、PATH、starship init）。
 检测到 Oh My Zsh / Oh My Bash 时先询问卸载。
 

@@ -37,7 +37,7 @@ configs/
 │   ├── pnpm.sh                # pnpm（npm 固定版本）
 │   ├── prd.sh
 │   ├── ripgrep.sh
-│   ├── starship.sh             # Starship 提示符 + 最简配置；接管 shell 托管块，检测到 Oh My Zsh / Oh My Bash 先卸载
+│   ├── starship.sh             # Starship 提示符 + pure 预设配置；接管 shell 托管块，检测到 Oh My Zsh / Oh My Bash 先卸载
 │   ├── style-check.sh
 │   ├── tldr.sh
 │   ├── tmux.sh                # tmux + 配置（~/.tmux.conf、TPM）
