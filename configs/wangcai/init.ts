@@ -48,7 +48,7 @@ export default {
     { id: 'files', repo: 'https://github.com/lengmoXXL/WangCai-files' },
     // 一次读一个文件：语言服务、vim 键，点页头的「预览」把文件交给 preview。
     { id: 'editor', repo: 'https://github.com/lengmoXXL/WangCai-editor',
-      config: { lsp: {
+      config: { fontSizes: { markdown: 13 }, lsp: {
         c: { command: ['clice', 'serve'] },
         cpp: { command: ['clice', 'serve'] },
       } },
