@@ -21,7 +21,7 @@
 // 插件就是一个目录，里面是编译好的 main.cjs（主进程）和可选的 ui.js / ui.css（界面文件）。
 // 配置字段的完整说明：/Users/lzy/.local/share/wangcai/src/README.md
 // 删掉本文件会重新生成这份默认配置。
-import type { Config, KeyContext } from 'wangcai.api';
+import type { Config, KeyContext, Machine } from 'wangcai.api';
 // network 与 machines 随机器不同，放在同目录 local.ts：install 脚本缺失时生成、存在则不覆盖。
 import local from './local.ts';
 
@@ -64,6 +64,7 @@ export default {
   keys: {
     '<leader>bf': { command: 'worktree.fork', desc: ['worktree', 'fork'], global: true },
     '<leader>bd': { command: 'worktree.remove', desc: ['worktree', '删除'], global: true },
+    '<leader>gj': { command: 'report.jump', desc: ['goto', '跳到引用的代码'], global: true },
   },
   commands: {
     // 输入分支名，在仓库旁边建 worktree：目录是 仓库名-分支名，分支里的 / 换成 -，不会多出目录层级。
@@ -122,6 +123,38 @@ export default {
         if (dropped.code !== 0) return ctx.notify(dropped.stderr.trim());
       }
       ctx.notify(`已删除 ${target.path}${target.branch ? `（分支 ${target.branch}）` : ''}`);
+    },
+    // code-report 的 caption 跳转，与 nvim caption_jump.lua 同逻辑：光标在 `path:start-end` caption 行
+    // 或代码块内时跳到引用处（块内第 N 行 -> start+N-1），路径相对报告所在目录。
+    'report.jump': async (ctx) => {
+      const at = await ctx.request('editor', 'cursor') as { machine: Machine; path: string; line: number } | undefined;
+      if (!at) return ctx.notify('编辑器里没有打开的文件');
+      try {
+        const text = await ctx.request('editor', 'read', { machine: at.machine, path: at.path }) as string;
+        const lines = text.split('\n');
+        const parse = (s: string) => {
+          const t = s.replace(/[`*]/g, '').trim();
+          const m = /^(.*):(\d+)-(\d+)$/.exec(t) ?? /^(.*):(\d+)$/.exec(t);
+          return m && m[1] ? { path: m[1], start: +m[2], end: +(m[3] ?? m[2]) } : undefined;
+        };
+        let cap = parse(lines[at.line - 1] ?? '');
+        if (!cap) {
+          let fence = at.line;
+          while (fence > 1 && !/^\s*```/.test(lines[fence - 1])) fence--;
+          if (fence > 1) {
+            let c = fence - 1;
+            while (c > 1 && /^\s*$/.test(lines[c - 1])) c--;
+            cap = parse(lines[c - 1]);
+            if (cap && at.line > fence) cap.start = Math.min(cap.start + at.line - fence - 1, cap.end);
+          }
+        }
+        if (!cap) return ctx.notify('光标不在引用块里');
+        const base = at.path.slice(0, at.path.lastIndexOf('/')) || '/';
+        const target = await ctx.request('editor', 'resolve', { machine: at.machine, path: cap.path, base }) as { path: string };
+        await ctx.publish('onclick', { type: 'file', machine: at.machine, path: target.path, line: cap.start });
+      } catch (e) {
+        ctx.notify(e instanceof Error ? e.message : String(e));
+      }
     },
   },
 } satisfies Config;
