@@ -25,6 +25,9 @@ import type { Config, KeyContext } from 'wangcai.api';
 // network 与 machines 随机器不同，放在同目录 local.ts：install 脚本缺失时生成、存在则不覆盖。
 import local from './local.ts';
 
+// 插件字体：DejaVuSansM Nerd Font 需要安装（install/fonts.sh 的 dejavu）；插件代码默认是 macOS 自带的 Menlo。
+const font = { family: '"DejaVuSansM Nerd Font Mono", monospace' };
+
 // 当前工作区的机器与终端所在目录；没有工作区在前、或终端还没进过目录时给 undefined。
 async function front({ machine, request }: KeyContext) {
   const m = machine();
@@ -40,23 +43,23 @@ export default {
   workspaces: [
     { id: 'terminal-agent',
       repo: 'https://github.com/lengmoXXL/WangCai-terminal-agent',
-      config: { machines: local.machines },
+      config: { font, machines: local.machines },
     },
   ],
   tabs: [
     // 目录遍历归它：点一个文件就发 onclick，由 editor 接住。
-    { id: 'files', repo: 'https://github.com/lengmoXXL/WangCai-files' },
+    { id: 'files', repo: 'https://github.com/lengmoXXL/WangCai-files', config: { font } },
     // 一次读一个文件：语言服务、vim 键，点页头的「预览」把文件交给 preview。
     { id: 'editor', repo: 'https://github.com/lengmoXXL/WangCai-editor',
-      config: { fontSizes: { markdown: 13 }, lsp: {
+      config: { font, fontSizes: { markdown: 13 }, lsp: {
         c: { command: ['clice', 'serve'] },
         cpp: { command: ['clice', 'serve'] },
       } },
     },
     // 图片、Markdown 与 HTML 由它渲染。
-    { id: 'preview', repo: 'https://github.com/lengmoXXL/WangCai-preview' },
-    { id: 'git', repo: 'https://github.com/lengmoXXL/WangCai-git' },
-    { id: 'terminal', repo: 'https://github.com/lengmoXXL/WangCai-terminal' },
+    { id: 'preview', repo: 'https://github.com/lengmoXXL/WangCai-preview', config: { font } },
+    { id: 'git', repo: 'https://github.com/lengmoXXL/WangCai-git', config: { font } },
+    { id: 'terminal', repo: 'https://github.com/lengmoXXL/WangCai-terminal', config: { font } },
   ],
   keys: {
     '<leader>bf': { command: 'worktree.fork', desc: ['worktree', 'fork'], global: true },
