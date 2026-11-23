@@ -33,8 +33,8 @@ Reports are read in Neovim with otter.nvim, where fenced excerpts carry a
 live LSP context. Follow them strictly:
 
 - Every claim about code cites it with a fenced block quoting the exact
-  lines, labeled by a caption above the block: `src/server.ts:42-58`. `gd` in
-  the block jumps to the cited lines.
+  lines, labeled by a caption below the block, wrapped in a blockquote:
+  ``> `src/server.ts:42-58` ``. `gd` in the block jumps to the cited lines.
 - Quote verbatim with the real language tag (`ts`, `lua`, ...); never
   reformat. Code lines are exempt from the 80-character wrap rule.
 - Trim excerpts to the lines that matter for the claim.

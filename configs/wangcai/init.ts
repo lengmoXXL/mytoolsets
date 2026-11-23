@@ -124,8 +124,8 @@ export default {
       }
       ctx.notify(`已删除 ${target.path}${target.branch ? `（分支 ${target.branch}）` : ''}`);
     },
-    // code-report 的 caption 跳转，与 nvim caption_jump.lua 同逻辑：光标在 `path:start-end` caption 行
-    // 或代码块内时跳到引用处（块内第 N 行 -> start+N-1），路径相对报告所在目录。
+    // code-report 的 caption 跳转，与 nvim caption_jump.lua 同逻辑：caption 在代码块下方（`> path:start-end`），
+    // 光标在 caption 行或块内时跳到引用处（块内第 N 行 -> start+N-1），路径相对报告所在目录。
     'report.jump': async (ctx) => {
       const at = await ctx.request('editor', 'cursor') as { machine: Machine; path: string; line: number } | undefined;
       if (!at) return ctx.notify('编辑器里没有打开的文件');
@@ -133,19 +133,21 @@ export default {
         const text = await ctx.request('editor', 'read', { machine: at.machine, path: at.path }) as string;
         const lines = text.split('\n');
         const parse = (s: string) => {
-          const t = s.replace(/[`*]/g, '').trim();
+          const t = s.replace(/^\s*>\s*/, '').replace(/[`*]/g, '').trim();
           const m = /^(.*):(\d+)-(\d+)$/.exec(t) ?? /^(.*):(\d+)$/.exec(t);
           return m && m[1] ? { path: m[1], start: +m[2], end: +(m[3] ?? m[2]) } : undefined;
         };
         let cap = parse(lines[at.line - 1] ?? '');
         if (!cap) {
-          let fence = at.line;
-          while (fence > 1 && !/^\s*```/.test(lines[fence - 1])) fence--;
-          if (fence > 1) {
-            let c = fence - 1;
-            while (c > 1 && /^\s*$/.test(lines[c - 1])) c--;
-            cap = parse(lines[c - 1]);
-            if (cap && at.line > fence) cap.start = Math.min(cap.start + at.line - fence - 1, cap.end);
+          let open = at.line;
+          while (open > 1 && !/^\s*```/.test(lines[open - 1])) open--;
+          let close = at.line + 1;
+          while (close <= lines.length && !/^\s*```/.test(lines[close - 1])) close++;
+          if (/^\s*```/.test(lines[open - 1] ?? '') && close <= lines.length && close > open) {
+            let c = close + 1;
+            while (c <= lines.length && /^\s*$/.test(lines[c - 1])) c++;
+            cap = parse(lines[c - 1] ?? '');
+            if (cap && at.line > open) cap.start = Math.min(cap.start + at.line - open - 1, cap.end);
           }
         }
         if (!cap) return ctx.notify('光标不在引用块里');

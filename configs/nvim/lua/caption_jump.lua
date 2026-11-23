@@ -1,10 +1,10 @@
--- markdown 代码块 caption 跳转：代码块上方一行是 caption（`path:start-end`，
+-- markdown 代码块 caption 跳转：代码块下方一行是 caption（`> path:start-end`，
 -- 路径相对当前文件所在目录）。块内 gd 跳到对应行（块内第 N 行 -> start+N-1），
 -- caption 行上 gd 跳到 start；无 caption 时回落到 LSP 定义。
 local M = {}
 
 local function parse_caption(text)
-  local t = text:gsub('[`*]', ''):match('^%s*(.-)%s*$')
+  local t = text:gsub('^%s*>%s*', ''):gsub('[`*]', ''):match('^%s*(.-)%s*$')
   local path, s, e = t:match('^(.-):(%d+)%-(%d+)$')
   if path and path ~= '' then
     return path, tonumber(s), tonumber(e)
@@ -21,18 +21,22 @@ function M.jump()
 
   local path, start_l, end_l = parse_caption(lines[row] or '')
   if not path then
-    local fence = row
-    while fence > 1 and not lines[fence]:match('^%s*```') do
-      fence = fence - 1
+    local open = row
+    while open > 1 and not lines[open]:match('^%s*```') do
+      open = open - 1
     end
-    if fence > 1 then
-      local cap = fence - 1
-      while cap > 1 and lines[cap]:match('^%s*$') do
-        cap = cap - 1
+    local close = row + 1
+    while close <= #lines and not lines[close]:match('^%s*```') do
+      close = close + 1
+    end
+    if lines[open] and lines[open]:match('^%s*```') and close <= #lines and close > open then
+      local cap = close + 1
+      while cap <= #lines and lines[cap]:match('^%s*$') do
+        cap = cap + 1
       end
-      path, start_l, end_l = parse_caption(lines[cap])
-      if path and row > fence then
-        start_l = math.min(start_l + row - fence - 1, end_l)
+      path, start_l, end_l = parse_caption(lines[cap] or '')
+      if path and row > open then
+        start_l = math.min(start_l + row - open - 1, end_l)
       end
     end
   end

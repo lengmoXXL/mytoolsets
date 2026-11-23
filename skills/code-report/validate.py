@@ -2,7 +2,7 @@
 """校验 code-report 里的代码块引用。
 
 用法: validate.py <report.md>
-caption 形如 `path:start-end` 或 `path:line`（反引号包裹，独占一行，位于块上方）。
+caption 形如 `path:start-end` 或 `path:line`（反引号包裹，> 引用独占一行，位于块下方）。
 带语言标注的 fenced block 缺 caption、caption 目标文件不存在、行号越界、
 或块内容与引用的源文件行不一致时，逐条列出并退出码 1。
 """
@@ -11,16 +11,15 @@ import re
 import sys
 
 CAPTION = re.compile(r"`([^`\s]+):(\d+)(?:-(\d+))?`")
-CAPTION_LINE = re.compile(r"^[\s`*_]*`([^`\s]+):(\d+)(?:-(\d+))?`[\s`*_]*$")
+CAPTION_LINE = re.compile(r"^[\s>`*_]*`([^`\s]+):(\d+)(?:-(\d+))?`[\s`*_]*$")
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})\s*(\S*)")
 
 
-def caption_line_above(lines, idx):
-    for prev in reversed(lines[:idx]):
-        if prev.strip():
-            return CAPTION_LINE.match(prev)
+def caption_line_below(lines, idx):
+    for nxt in lines[idx + 1:]:
+        if nxt.strip():
+            return CAPTION_LINE.match(nxt)
     return None
-
 
 def check_body(cap, body, base, problems):
     path, start, end, report_line = cap
@@ -62,21 +61,20 @@ def main():
 
     in_block = False
     body = []
-    cap = None
+    lang = False
     for i, line in enumerate(lines):
         fence = FENCE.match(line)
         if fence:
             if not in_block:
-                m = caption_line_above(lines, i)
-                if fence.group(2) and not m:
+                lang = bool(fence.group(2))
+                body = []
+            else:
+                m = caption_line_below(lines, i)
+                if lang and not m:
                     problems.append((i + 1, "代码块缺少 caption"))
                 if m:
                     cap = (m.group(1), int(m.group(2)), int(m.group(3) or m.group(2)), i + 1)
-                else:
-                    cap = None
-                body = []
-            elif cap:
-                check_body(cap, body, base, problems)
+                    check_body(cap, body, base, problems)
             in_block = not in_block
             continue
         if in_block:
