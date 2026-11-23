@@ -66,6 +66,11 @@ for dep in curl sed tar rsync uname mktemp; do
     fi
 done
 
+if ! command -v python3 &>/dev/null; then
+    echo "错误: 缺少 python3，请先运行 install/compiler/python.sh" >&2
+    exit 1
+fi
+
 target_tag="rust-v${CODEX_VERSION}"
 
 local_codex=""
@@ -108,11 +113,63 @@ compare_versions() {
     echo 0
 }
 
+if [[ "$UPDATE" == "1" && ( -z "$local_codex" || -z "$local_version" ) ]]; then
+    echo "未安装，跳过: codex"
+    exit 0
+fi
+
+# config.toml 由 codex 运行时改写（trust/NUX 等），不能整文件托管；
+# 用 tomllib 判断缺键后按文本插入，保留其余内容。
+# 0.162+ 默认 1 行/滚轮事件，xterm.js 类终端下滚动偏慢，3.0 恢复旧速度。
+codex_config="${HOME}/.codex/config.toml"
+config_tmp="$(mktemp)"
+if ! python3 - "$codex_config" > "$config_tmp" <<'PY'
+import re, sys
+try:
+    import tomllib
+except ModuleNotFoundError:
+    sys.exit("错误: 需要 Python 3.11+ (tomllib)，先运行 install/compiler/python.sh")
+
+path = sys.argv[1]
+try:
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+except FileNotFoundError:
+    text = ""
+try:
+    doc = tomllib.loads(text)
+except tomllib.TOMLDecodeError as e:
+    sys.exit(f"错误: 解析 {path} 失败: {e}")
+if "mouse_scroll_speed" in doc.get("tui", {}):
+    sys.exit(0)
+line = "mouse_scroll_speed = 3.0\n"
+if "tui" in doc:
+    lines = text.splitlines(keepends=True)
+    for i, l in enumerate(lines):
+        if re.match(r"\s*\[\s*tui\s*\]\s*(#.*)?$", l):
+            lines.insert(i + 1, line)
+            break
+    else:
+        sys.exit(f"错误: {path} 有 tui 表但找不到 [tui] 表头行")
+    text = "".join(lines)
+else:
+    if text and not text.endswith("\n"):
+        text += "\n"
+    text += "\n[tui]\n" + line
+try:
+    tomllib.loads(text)
+except tomllib.TOMLDecodeError as e:
+    sys.exit(f"错误: 合并后解析失败: {e}")
+sys.stdout.write(text)
+PY
+then
+    echo "警告: 跳过 mouse_scroll_speed 写入" >&2
+elif [[ -s "$config_tmp" ]]; then
+    write_file_if_changed "$codex_config" "$config_tmp"
+fi
+rm -f "$config_tmp"
+
 if [[ -z "$local_codex" || -z "$local_version" ]]; then
-    if [[ "$UPDATE" == "1" ]]; then
-        echo "未安装，跳过: codex"
-        exit 0
-    fi
     echo "Codex 未安装，将安装目标版本 ${CODEX_VERSION}"
 else
     echo "当前 Codex: ${local_version} (${local_codex})"
