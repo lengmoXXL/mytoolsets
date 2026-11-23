@@ -2,7 +2,7 @@
 """校验 code-report 里的代码块引用。
 
 用法: validate.py <report.md>
-caption 形如 `path:start-end` 或 `path:line`（反引号包裹，> 引用独占一行，位于块下方）。
+caption 形如 > path:start-end 或 > path:line（> 引用独占一行，位于块下方，路径不加反引号）。
 带语言标注的 fenced block 缺 caption、caption 目标文件不存在、行号越界、
 或块内容与引用的源文件行不一致时，逐条列出并退出码 1。
 """
@@ -11,7 +11,7 @@ import re
 import sys
 
 CAPTION = re.compile(r"`([^`\s]+):(\d+)(?:-(\d+))?`")
-CAPTION_LINE = re.compile(r"^[\s>`*_]*`([^`\s]+):(\d+)(?:-(\d+))?`[\s`*_]*$")
+CAPTION_LINE = re.compile(r"^\s*>\s*(\S+):(\d+)(?:-(\d+))?\s*$")
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})\s*(\S*)")
 
 
@@ -80,7 +80,9 @@ def main():
         if in_block:
             body.append(line)
             continue
-        for path, start, end in CAPTION.findall(line):
+        cm = CAPTION_LINE.match(line)
+        cites = [(cm.group(1), cm.group(2), cm.group(3))] if cm else CAPTION.findall(line)
+        for path, start, end in cites:
             if "://" in path:
                 continue
             start, end = int(start), int(end or start)

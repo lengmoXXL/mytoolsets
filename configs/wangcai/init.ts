@@ -133,7 +133,8 @@ export default {
         const text = await ctx.request('editor', 'read', { machine: at.machine, path: at.path }) as string;
         const lines = text.split('\n');
         const parse = (s: string) => {
-          const t = s.replace(/^\s*>\s*/, '').replace(/[`*]/g, '').trim();
+          const t = /^\s*>\s*(.*?)\s*$/.exec(s)?.[1];
+          if (!t) return undefined;
           const m = /^(.*):(\d+)-(\d+)$/.exec(t) ?? /^(.*):(\d+)$/.exec(t);
           return m && m[1] ? { path: m[1], start: +m[2], end: +(m[3] ?? m[2]) } : undefined;
         };

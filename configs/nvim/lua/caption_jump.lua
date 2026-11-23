@@ -4,7 +4,8 @@
 local M = {}
 
 local function parse_caption(text)
-  local t = text:gsub('^%s*>%s*', ''):gsub('[`*]', ''):match('^%s*(.-)%s*$')
+  local t = text:match('^%s*>%s*(.-)%s*$')
+  if not t then return end
   local path, s, e = t:match('^(.-):(%d+)%-(%d+)$')
   if path and path ~= '' then
     return path, tonumber(s), tonumber(e)
