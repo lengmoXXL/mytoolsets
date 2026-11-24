@@ -27,7 +27,52 @@ These rules apply at every structural level.
 
 ### Minimal Implementation
 
-For each unit, decide whether it must exist.
+For each unit, identify the required behavior it serves. Use the user's
+requirements, API contracts, supported callers, and configuration as evidence.
+Apply the same standard to existing code and new changes.
+
+#### Separate Paths Require Distinct Outcomes
+
+For each special case, trace the condition back to the entry point and
+follow its result to the caller. Keep a separate path when a supported
+scenario requires a distinct outcome.
+
+- **Internal state.** Check what validation, construction, and the object's
+  lifetime already guarantee. Keep the code that establishes the invariant
+  and flag redundant handling inside it.
+- **Failure handling.** Keep a catch, fallback, or error conversion when
+  it enables recovery, fulfills an API contract, or adds useful diagnostic
+  context. Flag conversions that only relay the error to the same failure
+  outcome.
+- **Tests.** Assess each test against the supported behavior. A test for an
+  existing branch shows what the implementation does. Verify that the
+  branch's outcome is required before retaining it for that test.
+
+For each finding, name the triggering state and explain which guarantee or
+caller contract makes the separate path unnecessary.
+
+##### Example of Repeated Initialization
+
+The logging API permits one initialization per lifetime. An empty
+`path` selects the default configuration when initializing.
+
+```cpp
+if (mBackends) {
+    if (path.empty()) {
+        return Status::OK();
+    }
+    return Status(EALREADY, "Logging system already initialized");
+}
+```
+
+Once initialization succeeds, every subsequent call has the same required
+outcome. The choice of configuration belongs to the first call.
+
+```cpp
+if (mBackends) {
+    return Status(EALREADY, "Logging system already initialized");
+}
+```
 
 #### Compatibility Logic
 
