@@ -6,7 +6,7 @@ set -e
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../tools" && pwd)/common.sh"
 
 REPO_URL="https://github.com/lengmoXXL/markdown-oxide.git"
-PINNED_COMMIT="d99a2deb32a4de3b2026a1d65373f52ebb72930d"  # fork HEAD，即上游 0.25.12 + GitHub slug 标题链接解析
+PINNED_COMMIT="2fbcc4b83da93bcdb09d8005f58ea57cf364bcef"  # fork HEAD，即上游 0.25.12 + 路径后缀匹配 + GitHub slug/HTML 锚点标题链接解析
 GITHUB_PROXY_PREFIX="https://gh-proxy.com/"
 RUST_DIR="${HOME}/.local/rust"
 INSTALL_ROOT="${HOME}/.local/markdown-oxide"
@@ -89,17 +89,17 @@ if [[ -x "$BINARY" && "$UPDATE" != "1" ]]; then
 fi
 
 if [[ -x "$BINARY" && "$(cat "$MARKER" 2>/dev/null)" == "$PINNED_COMMIT" ]]; then
-    echo "markdown-oxide 已是最新: $VERSION"
+    echo "markdown-oxide 已是最新: ${PINNED_COMMIT:0:8}"
     exit 0
 fi
 
 if [[ "$UPDATE" == "1" ]]; then
-    confirm_update "markdown-oxide -> $VERSION" || exit 0
+    confirm_update "markdown-oxide -> ${PINNED_COMMIT:0:8}" || exit 0
 fi
 
 echo "从源码安装 markdown-oxide"
 echo "  repo: $REPO_URL"
-echo "  tag: $VERSION"
+echo "  rev: ${PINNED_COMMIT:0:8}"
 
 mkdir -p "$BIN_DIR" "$INSTALL_ROOT"
 
