@@ -64,7 +64,8 @@ configs/
 │       ├── archify.sh          # 画图 skill（固定 commit）+ ~/.agents/skills/archify
 │       ├── code-report.sh
 │       ├── code-style.sh
-│       └── neovim-skill.sh
+│       ├── neovim-skill.sh
+│       └── product-style.sh    # 体验评审 skill + ~/.agents/skills/product-style
 ├── configs/
 │   ├── agents/
 │   │   ├── editing-constraints.md
