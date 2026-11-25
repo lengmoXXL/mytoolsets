@@ -43,7 +43,9 @@ export default {
   workspaces: [
     { id: 'terminal-agent',
       repo: 'https://github.com/lengmoXXL/WangCai-terminal-agent',
-      config: { font, machines: local.machines },
+      commit: '645261a',
+      // codex 工作区默认 yolo：命令都在远端 VM 里跑，本机不执行。
+      config: { font, machines: local.machines, codex: { enabled: true, args: ['--dangerously-bypass-approvals-and-sandbox'] } },
     },
   ],
   tabs: [
