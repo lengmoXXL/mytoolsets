@@ -28,14 +28,14 @@ import local from './local.ts';
 // 插件字体：DejaVuSansM Nerd Font 需要安装（install/fonts.sh 的 dejavu）；插件代码默认是 macOS 自带的 Menlo。
 const font = { family: '"DejaVuSansM Nerd Font Mono", monospace' };
 
-// 当前工作区的机器与终端所在目录；没有工作区在前、或终端还没进过目录时给 undefined。
+// 当前工作区的机器、目录与类型；没有工作区在前、或还没有目录时给 undefined。
 async function front({ machine, request }: KeyContext) {
   const m = machine();
   const { workspaces, active } = await request('terminal-agent', 'config') as {
-    workspaces: { id: string; cwd?: string }[]; active?: string;
+    workspaces: { id: string; cwd?: string; type?: string }[]; active?: string;
   };
-  const cwd = workspaces.find((w) => w.id === active)?.cwd;
-  return m && cwd ? { machine: m, cwd } : undefined;
+  const w = workspaces.find((item) => item.id === active);
+  return m && w?.cwd ? { machine: m, cwd: w.cwd, type: w.type } : undefined;
 }
 
 export default {
@@ -83,7 +83,7 @@ export default {
       const exists = (await git('rev-parse', '--verify', '--quiet', `refs/heads/${branch}`)).code === 0;
       const added = exists ? await git('worktree', 'add', dir, branch) : await git('worktree', 'add', '-b', branch, dir);
       if (added.code !== 0) return ctx.notify(added.stderr.trim());
-      await ctx.request('terminal-agent', 'workspace-create', { key: at.machine.id, cwd: dir });
+      await ctx.request('terminal-agent', 'workspace-create', { key: at.machine.id, cwd: dir, type: at.type });
       ctx.notify(`已创建 ${dir}（分支 ${branch}），工作区已打开`);
     },
     // 选一个 worktree，连目录带分支一起删；有未提交改动导致移除失败时，再问一次要不要强制。
