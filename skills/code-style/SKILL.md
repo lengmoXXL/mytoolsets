@@ -113,6 +113,67 @@ if (mBackends) {
 }
 ```
 
+#### Verify the Requirement for New Behavior
+
+For each new behavior, identify the user request, existing contract, or
+technical dependency of the requested outcome that requires it. Check that
+the requirement applies at the entry point where the behavior is added.
+
+When a branch comes from a test, build, or local verification constraint,
+compare the same normal invocation with and without its trigger. Flag any
+runtime behavior change without a requirement that applies to that caller.
+
+##### Example of a Test Constraint Changing a Runtime Default
+
+```cpp
+if (const auto *testDir = std::getenv("TEST_TMPDIR")) {
+    defaultPath = std::filesystem::path(testDir) / defaultPath.filename();
+}
+```
+
+Start the same application with the same logging configuration, once with
+`TEST_TMPDIR` and once without it. The default log directory changes. The
+test runner's need for a writable directory establishes a test condition.
+The runtime override requires its own evidence.
+
+#### Surface Simplifications That Change Behavior
+
+When removing an existing behavior would eliminate a branch, state, or
+abstraction, trace the behavior to the caller that observes it. Use the
+user's decisions and supported caller contracts to determine whether the
+behavior is required.
+
+If the choice is open, report it as a decision for the user. State the
+triggering scenario, what happens with each choice, and what code becomes
+unnecessary if the behavior is dropped. Ask before changing that behavior
+and continue with independent fixes.
+
+##### Example of an Inherited File Retry
+
+A rotating log sink replaces the active log by removing the old file and
+renaming the new one into place. `operation()` is the rename call.
+
+```cpp
+if (operation()) {
+    return;
+}
+details::os::sleep_for_millis(100);
+if (operation()) {
+    return;
+}
+```
+
+The retry comes from a Windows workaround. It also runs on Linux after
+a file operation fails with an error other than `ENOENT`.
+
+**Decision for the user**
+
+- Keep the retry. A transient failure can still recover on the second
+  attempt, with a 100 ms delay.
+- Drop the retry. The first such failure reopens and truncates the active
+  log and reports the error. The callers can invoke `remove` and `rename`
+  directly and share only failure recovery.
+
 #### Compatibility Logic
 
 Keep compatibility when the user's request, an established contract,
