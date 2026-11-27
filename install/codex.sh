@@ -15,13 +15,15 @@ CODE_MODE_HOST_BIN="${BIN_DIR}/codex-code-mode-host"
 CODEX_VERSION="0.172.0"
 CURL_USER_AGENT="configs-install-codex"
 GITHUB_RELEASE_PROXY="https://ghfast.top/"
+REFINE_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/configs/codex/skills/refine"
+REFINE_DEST="${HOME}/.codex/skills/refine"
 
 usage() {
     cat << EOF
 用法: $0 [--remove] [--update]
 
 选项:
-  --remove  卸载 codex
+  --remove  卸载 codex（CLI + refine skill）
   --update  更新已安装的工具（未安装则跳过）
 
 环境变量:
@@ -52,10 +54,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$REMOVE" == "1" ]]; then
-    confirm_remove "codex" || exit 0
+    confirm_remove "codex（CLI + refine skill）" || exit 0
     remove_file "$CODEX_BIN"
     remove_file "$CODE_MODE_HOST_BIN"
     remove_dir "$PACKAGE_DIR"
+    remove_dir "$REFINE_DEST"
     exit 0
 fi
 
@@ -168,6 +171,21 @@ elif [[ -s "$config_tmp" ]]; then
     write_file_if_changed "$codex_config" "$config_tmp"
 fi
 rm -f "$config_tmp"
+
+# refine skill（codex-only）：pi 已有 /refine extension，装进 codex 自己的 skill 根。
+if [[ ! -f "$REFINE_SRC/SKILL.md" ]]; then
+    echo "Missing skill source: $REFINE_SRC" >&2
+    exit 1
+fi
+refine_changes="$(rsync -nai --delete "$REFINE_SRC/" "$REFINE_DEST/" 2>/dev/null)"
+if [[ -n "$refine_changes" ]]; then
+    echo "$refine_changes"
+    if [[ "$UPDATE" != "1" ]] || confirm_update "refine skill"; then
+        mkdir -p "$REFINE_DEST"
+        rsync -ai --delete "$REFINE_SRC/" "$REFINE_DEST/"
+        echo "refine skill 已更新: $REFINE_DEST"
+    fi
+fi
 
 if [[ -z "$local_codex" || -z "$local_version" ]]; then
     echo "Codex 未安装，将安装目标版本 ${CODEX_VERSION}"

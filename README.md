@@ -15,7 +15,7 @@ configs/
 │   ├── clash-for-linux.sh
 │   ├── clashctl.sh
 │   ├── cmake.sh
-│   ├── codex.sh               # Codex CLI（固定版本）+ 滚动速度配置
+│   ├── codex.sh               # Codex CLI（固定版本）+ 滚动速度配置 + refine skill
 │   ├── doc-research.sh         # doc-research CLI（固定 commit）+ doc-research-init
 │   ├── fd.sh
 │   ├── fonts.sh
@@ -73,6 +73,10 @@ configs/
 │   │   ├── git-safety.md
 │   │   ├── inline-functions.md
 │   │   └── response-style.md
+│   ├── codex/
+│   │   └── skills/
+│   │       └── refine/
+│   │           └── SKILL.md
 │   ├── ghostty/
 │   │   └── config
 │   ├── herdr/
@@ -104,6 +108,8 @@ configs/
 │   │   │   ├── herdr-agent-state.ts  # herdr 状态上报集成（herdr 管理，升级时从 herdr integration install pi 重新同步）
 │   │   │   ├── link-pi-types.sh
 │   │   │   ├── refine.ts
+│   │   │   ├── test/
+│   │   │   │   └── refine.test.mjs
 │   │   │   └── tsconfig.json
 │   │   └── themes/
 │   │       ├── gray.json
@@ -120,6 +126,8 @@ configs/
 │   │   └── ...
 │   ├── code-style/
 │   │   └── ...
+│   └── product-style/
+│       └── ...
 └── tools/
     ├── build-perf-to-profile.sh
     ├── common.sh                # install 脚本共享函数（confirm_update / managed block / write-if-changed）
