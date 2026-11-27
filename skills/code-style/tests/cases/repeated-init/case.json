@@ -1,0 +1,9 @@
+{
+  "rule": "Separate Paths Require Distinct Outcomes",
+  "context": "The logging API permits one initialization per lifetime. An empty path selects the default configuration when initializing. This block runs at the start of the initialization function.",
+  "expected": {
+    "location": "init.cpp, the `if (path.empty()) return Status::OK();` branch inside the `if (mBackends)` guard",
+    "rule": "Separate Paths Require Distinct Outcomes",
+    "reason": "Once initialization has succeeded, every repeat call must return EALREADY; the empty-path branch returns OK with no required distinct outcome, so this separate path is unnecessary and should be removed."
+  }
+}

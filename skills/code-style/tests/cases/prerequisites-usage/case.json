@@ -1,0 +1,8 @@
+{
+  "rule": "Section Placement Matches Intent",
+  "expected": {
+    "location": "doc.md, the sentence `This script requires bash 5+.` under the `## Usage` heading",
+    "rule": "Section Placement Matches Intent",
+    "reason": "A requirement is not usage; it belongs under prerequisites or installation, not under the heading that promises commands to run."
+  }
+}

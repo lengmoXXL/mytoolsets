@@ -1,0 +1,8 @@
+{
+  "rule": "Function Boundaries Earn Their Place",
+  "expected": {
+    "location": "store.go, Dump() whose body duplicates Save()",
+    "rule": "Function Boundaries Earn Their Place",
+    "reason": "Dump copies Save's implementation, so one operation has two owners; without a distinct required contract, Dump should be removed and callers should use Save."
+  }
+}

@@ -41,7 +41,7 @@ fi
 
 mkdir -p "$dest"
 if [[ "$UPDATE" == "1" ]]; then
-    changes="$(rsync -nai --delete "$src/" "$dest/")"
+    changes="$(rsync -nai --delete --exclude=/tests/ "$src/" "$dest/")"
     if [[ -z "$changes" ]]; then
         echo "已是最新: $dest"
         exit 0
@@ -49,7 +49,7 @@ if [[ "$UPDATE" == "1" ]]; then
     echo "$changes"
     confirm_update "code-style skill" || exit 0
 fi
-rsync -ai --delete "$src/" "$dest/"
+rsync -ai --delete --exclude=/tests/ "$src/" "$dest/"
 
 echo "Installed code-style to $dest"
 

@@ -1,0 +1,9 @@
+{
+  "rule": "Compatibility Logic",
+  "context": "The supported configuration uses Endpoint only.",
+  "expected": {
+    "location": "config.go, the `if cfg.Endpoint == \"\" && cfg.LegacyURL != \"\"` fallback assigning Endpoint from LegacyURL",
+    "rule": "Compatibility Logic",
+    "reason": "The supported configuration uses Endpoint only; the LegacyURL fallback is unrequested compatibility logic and should be removed."
+  }
+}

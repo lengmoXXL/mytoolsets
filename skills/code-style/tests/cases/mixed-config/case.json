@@ -1,0 +1,9 @@
+{
+  "rule": "Type Levels Mirror Containment",
+  "context": "Timeout applies only to the HTTP endpoint, while Addr starts the gRPC server.",
+  "expected": {
+    "location": "config.go, the flat Config struct holding Endpoint, Timeout, and Addr at one level",
+    "rule": "Type Levels Mirror Containment",
+    "reason": "Timeout belongs to the HTTP endpoint and Addr to the gRPC server: two groups are collapsed into one level; each group needs its own nested level."
+  }
+}

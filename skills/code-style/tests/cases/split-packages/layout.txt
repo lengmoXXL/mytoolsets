@@ -1,0 +1,11 @@
+internal/
+├── order/
+│   └── order.go          # Order and its rules
+├── cart/
+│   └── cart.go           # cart model and lookup
+├── pricing/
+│   └── pricing.go        # coupon, membership, and tax rules
+├── payment/
+│   └── payment.go        # charge calls to an external gateway
+└── httpapi/
+    └── checkout.go       # checkout endpoint

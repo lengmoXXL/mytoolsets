@@ -1,0 +1,8 @@
+{
+  "rule": "Control Flow Resolves Each Case Early",
+  "expected": {
+    "location": "config.go, loadConfig's nested `if err == nil { ... } else { return nil, err }` success path",
+    "rule": "Control Flow Resolves Each Case Early",
+    "reason": "Each else branch returns an error; converting them to early returns keeps the success path at the top indentation level."
+  }
+}

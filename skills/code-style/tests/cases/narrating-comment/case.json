@@ -1,0 +1,8 @@
+{
+  "rule": "Self-Explanatory Code Over Comments",
+  "expected": {
+    "location": "users.go, the `// check whether the user exists` comment and the `// GetUserByID returns the user with the given ID.` doc comment",
+    "rule": "Self-Explanatory Code Over Comments",
+    "reason": "These comments restate what the code condition and the function signature already say; they should be deleted."
+  }
+}

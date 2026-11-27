@@ -1,0 +1,9 @@
+{
+  "rule": "Surface Simplifications That Change Behavior",
+  "context": "A rotating log sink replaces the active log by removing the old file and renaming the new one into place. operation() is the rename call. The retry comes from a Windows workaround. It also runs on Linux after a file operation fails with an error other than ENOENT.",
+  "expected": {
+    "location": "rotate.cpp, the retry: the second `if (operation())` after `sleep_for_millis(100)`",
+    "rule": "Surface Simplifications That Change Behavior",
+    "reason": "The retry is a Windows workaround that also runs on Linux; keeping or dropping it changes observable behavior, so it must be surfaced as a decision for the user rather than silently kept or removed."
+  }
+}

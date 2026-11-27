@@ -1,0 +1,8 @@
+{
+  "rule": "Self-Explanatory Code Over Comments",
+  "expected": {
+    "location": "notify.go, the `// No fallback to SMS: the admin decided against it.` comment",
+    "rule": "Self-Explanatory Code Over Comments",
+    "reason": "The comment announces an absent fallback, making the reader wonder why one should exist without explaining why; it should be deleted."
+  }
+}

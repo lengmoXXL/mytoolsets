@@ -1,0 +1,8 @@
+{
+  "rule": "Checks Stay With Their Owner",
+  "expected": {
+    "location": "blob.go, the `if b.path == \"\"` empty-path check inside Read()",
+    "rule": "Checks Stay With Their Owner",
+    "reason": "Load() already rejects an empty path on every path Read() takes, so the duplicate check in Read() is redundant and should be dropped, leaving the validation to Load()."
+  }
+}

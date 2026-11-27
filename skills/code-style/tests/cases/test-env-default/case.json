@@ -1,0 +1,9 @@
+{
+  "rule": "Verify the Requirement for New Behavior",
+  "context": "Start the same application with the same logging configuration, once with TEST_TMPDIR and once without it. The default log directory changes. The test runner's need for a writable directory establishes a test condition.",
+  "expected": {
+    "location": "default_path.cpp, the `if (std::getenv(\"TEST_TMPDIR\"))` block that overrides defaultPath",
+    "rule": "Verify the Requirement for New Behavior",
+    "reason": "A test-runner constraint (needing a writable directory) changes the runtime default log directory for a normal invocation; no runtime requirement justifies this override at the entry point."
+  }
+}

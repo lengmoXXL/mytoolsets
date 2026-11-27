@@ -1,0 +1,9 @@
+{
+  "rule": "Directness",
+  "context": "The executor owns the compression pool, so its constructor is the natural place to look for thread startup. This implementation starts the pool when creating the first gzip handler.",
+  "expected": {
+    "location": "gzip.cpp, the lazy `if (!mPool)` creation and Start() of the compression pool inside gzip-handler creation",
+    "rule": "Directness",
+    "reason": "The executor owns the pool, so a reader expects startup in its constructor; starting it lazily here is a surprising location/timing that needs an explanatory comment, which is missing."
+  }
+}

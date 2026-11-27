@@ -1,0 +1,9 @@
+{
+  "rule": "Function Boundaries Earn Their Place",
+  "context": "The one caller writes New(addr, WithTimeout(5*time.Second)).",
+  "expected": {
+    "location": "client.go, the Option type, WithTimeout wrapper, and variadic New(addr, opts ...Option)",
+    "rule": "Function Boundaries Earn Their Place",
+    "reason": "With a single knob and a single caller, the Option machinery only carries one value without a needed abstraction; timeout should be passed directly as a parameter."
+  }
+}

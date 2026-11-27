@@ -9,3 +9,4 @@ __pycache__/
 .test/
 /dist/
 configs/pi/extensions/node_modules/
+skills/code-style/tests/results/

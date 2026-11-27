@@ -1,0 +1,8 @@
+{
+  "rule": "Prose Builds Understanding Gradually",
+  "expected": {
+    "location": "doc.md, the etcd sentence that leads with the Raft/watch mechanism before saying what etcd is",
+    "rule": "Prose Builds Understanding Gradually",
+    "reason": "The mechanism precedes what the thing is and is for, so the sentence must be read backwards; it should lead with purpose/what-it-is, then the mechanism."
+  }
+}

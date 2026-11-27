@@ -1,0 +1,8 @@
+{
+  "rule": "Related Steps Stay Together",
+  "expected": {
+    "location": "update.sh, the USE_CN rewrite of REPO_URL separated from the `git ls-remote \"$REPO_URL\"` that reads it",
+    "rule": "Related Steps Stay Together",
+    "reason": "The rewrite is far from its only reader and also runs on paths that never use the value; the local-path early return should come first and the rewrite should sit directly above the ls-remote that consumes it."
+  }
+}

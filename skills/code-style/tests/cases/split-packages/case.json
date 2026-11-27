@@ -1,0 +1,9 @@
+{
+  "rule": "Package Boundaries Earn Their Place",
+  "context": "The internal/ package layout is in layout.txt. Checkout is one operation.",
+  "expected": {
+    "location": "checkout.go / layout.txt, PlaceOrder threading state across the cart, pricing, payment, and order packages",
+    "rule": "Package Boundaries Earn Their Place",
+    "reason": "Checkout is one operation but is split across noun-named packages whose APIs the endpoint must thread intermediate values between; it should be one package, while storage/gateway stay split as replaceable mechanisms."
+  }
+}

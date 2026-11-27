@@ -1,0 +1,8 @@
+{
+  "rule": "Outline Levels Mirror Containment",
+  "expected": {
+    "location": "doc.md, the `## Rate limits` heading placed as a sibling of `## Retries`",
+    "rule": "Outline Levels Mirror Containment",
+    "reason": "Rate-limited retry is a special case of the general retry rule; its heading belongs nested below Retries, not beside it at the same level."
+  }
+}
