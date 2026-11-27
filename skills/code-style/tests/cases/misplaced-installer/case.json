@@ -1,0 +1,9 @@
+{
+  "rule": "File Placement Matches Intent",
+  "context": "code-style.sh, product-style.sh and refine.sh live in install/skill/; codex.sh lives in install/.",
+  "expected": {
+    "location": "refine.sh, dest=\"${CODEX_HOME:-$HOME/.codex}/skills/refine\"",
+    "rule": "File Placement Matches Intent",
+    "reason": "refine installs a codex-only skill into ~/.codex/skills while the install/skill/ siblings install shared skills into ~/.agents/skills, and codex.sh already manages codex config under ~/.codex; refine's install belongs merged into codex.sh rather than standing alone as a shared-skill installer."
+  }
+}

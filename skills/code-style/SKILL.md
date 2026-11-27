@@ -143,7 +143,11 @@ operation that depends on the check.
 
 Code and prose belong in the file whose purpose matches their responsibility;
 flag necessary content placed in a file about something else and move it to the
-right file instead of duplicating it there.
+right file instead of duplicating it there. Judge a file's purpose by what it
+actually does (its responsibility, target, and callers), not its name or
+directory label; for a group of sibling files, read the group's purpose from the
+members' shared responsibility or target, and flag a member that diverges from
+every sibling as belonging to the file that owns its responsibility.
 
 ### Related Declarations Stay Together
 
