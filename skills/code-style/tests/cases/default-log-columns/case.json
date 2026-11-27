@@ -1,0 +1,9 @@
+{
+  "rule": "Verify the Requirement for New Behavior",
+  "context": "An omitted ColumnNames uses time, level, thread and source location. __LOGGER__ was added to the table so that ColumnNames=__LOGGER__ can emit the logger name.",
+  "expected": {
+    "location": "pattern.cpp, the `if (useDefaultColumns || std::find(...))` loop that appends every table entry (including __LOGGER__) when useDefaultColumns is true",
+    "rule": "Verify the Requirement for New Behavior",
+    "reason": "Adding __LOGGER__ for explicit selection also inserts the logger name into the default layout (omitted ColumnNames), because useDefaultColumns appends the whole table; the default output and its separators change (pop_back removes the logger tab while the source-location tab remains). The requirement to emit the logger name applies only to explicit selection, not to the default mode. The default layout should be its own pattern and the table should serve only explicitly selected columns."
+  }
+}
