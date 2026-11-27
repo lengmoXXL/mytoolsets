@@ -53,8 +53,11 @@ export default {
     // 一次读一个文件：语言服务、vim 键，点页头的「预览」把文件交给 preview。
     { id: 'editor', repo: 'https://github.com/lengmoXXL/WangCai-editor',
       config: { font, fontSizes: { markdown: 13 }, lsp: {
-        c: { command: ['clice', 'serve'] },
-        cpp: { command: ['clice', 'serve'] },
+        // 根目录按最近的 .git 或 markers 找；默认 markers 含 CMakeLists.txt，bazel 外部依赖
+        // （如 spdlog）自带 CMakeLists.txt 会被当成独立根另起服务。只认 compile_commands.json，
+        // 依赖文件沿 external/ 向上归到主仓库（.git 始终参与找根）。
+        c: { command: ['clice', 'serve'], markers: ['compile_commands.json'] },
+        cpp: { command: ['clice', 'serve'], markers: ['compile_commands.json'] },
       } },
     },
     // 图片、Markdown 与 HTML 由它渲染。
