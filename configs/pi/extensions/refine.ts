@@ -67,6 +67,7 @@ export default function (pi: ExtensionAPI) {
 	let maxRounds = loadMaxRounds();
 	let pendingCheck = false;
 	let lastStopReason: string | undefined;
+	let parentResponse: string | undefined;
 	let retriedRound: number | undefined;
 	let activeRequest: { requestId: string; ownerRunId: string; nodeId: string } | undefined;
 	let activeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -86,6 +87,7 @@ export default function (pi: ExtensionAPI) {
 		round = 0;
 		pendingCheck = false;
 		lastStopReason = undefined;
+		parentResponse = undefined;
 		retriedRound = undefined;
 		ctx.ui.setStatus(STATUS_KEY, undefined);
 	};
@@ -129,25 +131,31 @@ export default function (pi: ExtensionAPI) {
 			ownerRunId: `refine-${ctx.sessionManager.getSessionId()}`,
 			nodeId: `refine-r${round}-${requestId.slice(0, 8)}`,
 			agent: "refine-checker",
-			task: `Refinement check, round ${round} of an iterative loop that repeats after every fix turn.
+			task: `${parentResponse ? `The parent agent's latest response (its reaction to the previous round: what it fixed, accepted, or rejected, and why):
+
+${parentResponse}
+
+---
+
+` : ""}Refinement check, round ${round} of an iterative loop that repeats after every fix turn.
 Acceptance criteria:
 ${criteria}
 
-Use the parent conversation for context and check the current work. Read any
-instructions referenced by the criteria and follow their scope, review order,
-and reporting requirements.
+Check the current work against the criteria. Read any instructions referenced
+by the criteria and follow their scope, review order, and reporting requirements.
+When the parent response above is present, honor a rejection whose reason still
+holds; re-raise a rejected finding only if its reason no longer applies, and
+explain why.
 
 Return only unresolved findings that require action under the criteria. Exclude
 passing checks, withdrawn concerns, and commentary from the findings array.
-Consider previous fixes and rejections; repeat a finding only if it remains
-valid, explaining why any previous rejection no longer applies.
 
 If a criterion cannot be verified, include it in findings with the reason so
 the parent can address it. Return empty findings only when the work satisfies
 the criteria under their review procedure.
 
 Return the result ONLY by calling the structured_output tool.`,
-			context: "fork",
+			context: "fresh",
 			cwd: ctx.cwd,
 			model: ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : undefined,
 			timeoutMs: CHECK_TIMEOUT_MS,
@@ -295,7 +303,12 @@ A follow-up check runs automatically after this turn settles.
 
 	pi.on("agent_end", (event) => {
 		if (criteria === undefined) return;
-		lastStopReason = event.messages.findLast((message) => message.role === "assistant")?.stopReason;
+		const last = event.messages.findLast((message) => message.role === "assistant");
+		lastStopReason = last?.stopReason;
+		parentResponse = last?.content
+			.flatMap((part) => (part.type === "text" ? [part.text] : []))
+			.join("\n")
+			.trim() || undefined;
 	});
 
 	pi.on("agent_settled", (_event, ctx) => {
