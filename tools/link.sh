@@ -45,9 +45,12 @@ link_token() {
         punct="${core: -1}${punct}"
         core="${core%?}"
     done
-    if [[ "$core" =~ ^(.+)(:[0-9]+(:[0-9]+)?)$ ]]; then
+    if [[ "$core" =~ ^(.+):([0-9]+):([0-9]+)$ ]]; then
         core="${BASH_REMATCH[1]}"
-        suf="${BASH_REMATCH[2]}"
+        suf=":${BASH_REMATCH[2]}:${BASH_REMATCH[3]}"
+    elif [[ "$core" =~ ^(.+):([0-9]+)$ ]]; then
+        core="${BASH_REMATCH[1]}"
+        suf=":${BASH_REMATCH[2]}"
     fi
     if ! abs=$(resolve "$core"); then
         printf '%s' "$tok"
