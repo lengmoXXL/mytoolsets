@@ -9,7 +9,7 @@ Review CLI, TUI, and plugin interfaces for a simple, consistent experience.
 
 ## Scope
 
-Use the scope the user names; default to the changed surface or the named flow.
+Use the scope the user names; otherwise follow the whole feature the change affects end to end: its entry, every state and exit, and the surfaces sharing its keys, terms, and confirmations.
 
 Check as a user trying the product for the first time, not as a reader of its source. Prefer computer use — run the command, click and type through the UI, watch what actually happens — over analyzing code. Judge what the user sees, does, and waits for; read code only when a behavior cannot be observed directly.
 
