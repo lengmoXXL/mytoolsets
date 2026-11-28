@@ -124,6 +124,7 @@ fi
 # config.toml 由 codex 运行时改写（trust/NUX 等），不能整文件托管；
 # 用 tomllib 判断缺键后按文本插入，保留其余内容。
 # 0.162+ 默认 1 行/滚轮事件，xterm.js 类终端下滚动偏慢，3.0 恢复旧速度。
+# file_opener=none：关掉 codex 自带的编辑器预览引用链接，文件引用走 AGENTS file-links 的 file:// OSC 链接。
 codex_config="${HOME}/.codex/config.toml"
 config_tmp="$(mktemp)"
 if ! python3 - "$codex_config" > "$config_tmp" <<'PY'
@@ -143,22 +144,34 @@ try:
     doc = tomllib.loads(text)
 except tomllib.TOMLDecodeError as e:
     sys.exit(f"错误: 解析 {path} 失败: {e}")
-if "mouse_scroll_speed" in doc.get("tui", {}):
-    sys.exit(0)
-line = "mouse_scroll_speed = 3.0\n"
-if "tui" in doc:
-    lines = text.splitlines(keepends=True)
+lines = text.splitlines(keepends=True)
+
+if "mouse_scroll_speed" not in doc.get("tui", {}):
+    line = "mouse_scroll_speed = 3.0\n"
+    if "tui" in doc:
+        for i, l in enumerate(lines):
+            if re.match(r"\s*\[\s*tui\s*\]\s*(#.*)?$", l):
+                lines.insert(i + 1, line)
+                break
+        else:
+            sys.exit(f"错误: {path} 有 tui 表但找不到 [tui] 表头行")
+    else:
+        if lines and not lines[-1].endswith("\n"):
+            lines.append("\n")
+        lines.extend(["\n", "[tui]\n", line])
+
+if "file_opener" not in doc:
+    line = 'file_opener = "none"\n'
     for i, l in enumerate(lines):
-        if re.match(r"\s*\[\s*tui\s*\]\s*(#.*)?$", l):
-            lines.insert(i + 1, line)
+        if re.match(r"\s*\[", l):
+            lines.insert(i, line)
             break
     else:
-        sys.exit(f"错误: {path} 有 tui 表但找不到 [tui] 表头行")
-    text = "".join(lines)
-else:
-    if text and not text.endswith("\n"):
-        text += "\n"
-    text += "\n[tui]\n" + line
+        if lines and not lines[-1].endswith("\n"):
+            lines.append("\n")
+        lines.append(line)
+
+text = "".join(lines)
 try:
     tomllib.loads(text)
 except tomllib.TOMLDecodeError as e:
@@ -166,7 +179,7 @@ except tomllib.TOMLDecodeError as e:
 sys.stdout.write(text)
 PY
 then
-    echo "警告: 跳过 mouse_scroll_speed 写入" >&2
+    echo "警告: 跳过 config.toml 默认键写入（mouse_scroll_speed/file_opener）" >&2
 elif [[ -s "$config_tmp" ]]; then
     write_file_if_changed "$codex_config" "$config_tmp"
 fi

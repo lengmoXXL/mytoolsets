@@ -15,7 +15,7 @@ configs/
 │   ├── clash-for-linux.sh
 │   ├── clashctl.sh
 │   ├── cmake.sh
-│   ├── codex.sh               # Codex CLI（固定版本）+ 滚动速度配置 + refine skill
+│   ├── codex.sh               # Codex CLI（固定版本）+ config.toml 默认键 + refine skill
 │   ├── doc-research.sh         # doc-research CLI（固定 commit）+ doc-research-init
 │   ├── fd.sh
 │   ├── fonts.sh
