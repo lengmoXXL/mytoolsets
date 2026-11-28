@@ -1,6 +1,6 @@
 ---
 name: code-style
-description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, duplicated responsibilities, unintuitive information order, or unrequested documentation.
+description: Minimalist style review for code, scripts, configuration, and documentation. Use when asked to check code or doc style, review whether changes are necessary, enforce minimal implementation, or inspect changed files for unnecessary helpers, structure, control flow, comments, abstraction, compatibility logic, redundant sections, restated content, misplaced content, scattered related code, duplicated responsibilities, unintuitive information order, unrequested documentation, or behavior that breaks on real inputs and boundaries.
 ---
 
 # Code Style
@@ -16,8 +16,8 @@ The style is minimal and direct: every unit, state, and step serves a stated
 requirement; work happens where a reader following the call flow expects it;
 the same concept uses the same representation; each responsibility has one
 owner; structure mirrors containment and keeps related things together;
-information is ordered by dependency; and code explains itself rather than
-leaning on comments.
+information is ordered by dependency; code explains itself rather than
+leaning on comments; and behavior holds on real inputs and boundaries.
 
 ## Review
 
@@ -58,6 +58,15 @@ applicable checks pass or further work needs user input, then summarize the
 changes, validation, and any remaining findings.
 
 ## Rules
+
+### No Bugs
+
+Style never excuses broken behavior. Exercise the change against its real
+inputs and boundaries: empty or missing input, root and edge values,
+unterminated or trailing data, quoting and escaping, off-by-one, and platform
+differences. Report any input whose behavior deviates from the stated intent
+as a finding, even when every style rule passes. Verify by running the code or
+tracing concrete values, not by assuming the happy path.
 
 ### Minimal Implementation
 

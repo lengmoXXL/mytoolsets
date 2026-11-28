@@ -191,22 +191,28 @@ Review B (produced with the full skill):
 
 For each review, decide whether it contains a finding that describes the SAME
 problem as the expected problem: it points to the same location in the file and
-gives the same underlying reason. The cited rule name may differ (especially in
-Review A); judge the substance, not the label. A mere mention of the code, or a
-different problem at the same place, is NOT a match.
+gives the same underlying reason; judge the substance, not the label. A mere
+mention of the code, or a different problem at the same place, is NOT a match.
+For Review B also record attribution: MATCH = the matching finding cites the
+expected rule name; OTHER = same problem but a different rule; NO = no match.
 
 Reply with exactly two lines and nothing else:
 A: YES or NO
-B: YES or NO
+B: MATCH or OTHER or NO
 """
 
 
 def parse_judge(out):
     a = re.search(r"A\s*[:：]\s*(YES|NO)", out, re.I)
-    b = re.search(r"B\s*[:：]\s*(YES|NO)", out, re.I)
+    b = re.search(r"B\s*[:：]\s*(MATCH|OTHER|NO)", out, re.I)
     if not a or not b:
         return None, None, f"unparseable judge answer: {out[:200]}"
-    return a.group(1).upper() == "YES", b.group(1).upper() == "YES", None
+    return a.group(1).upper() == "YES", b.group(1).upper(), None
+
+
+def record(absent=None, present=None, attribution=None, error=None):
+    return {"absent": absent, "present": present,
+            "present_attribution": attribution, "error": error}
 
 
 def judge_case(backend, case, absent_out, present_out, model, reasoning,
@@ -244,8 +250,8 @@ def mark(detected, err, want):
 
 
 def report(cases, scored, label, results):
-    lines = ["| model | case | rule | absent | present | verdict |",
-             "|---|---|---|---|---|---|"]
+    lines = ["| model | case | rule | absent | present | B | verdict |",
+             "|---|---|---|---|---|---|---|"]
     rows = []
     for c in cases:
         s = scored[c["id"]]
@@ -254,12 +260,15 @@ def report(cases, scored, label, results):
         lines.append(
             f"| {label} | {c['id']} | {c['rule']} | "
             f"{mark(s['absent'], s['error'], False)} | "
-            f"{mark(s['present'], s['error'], True)} | {v} |"
+            f"{mark(s['present'], s['error'], True)} | "
+            f"{s['present_attribution'] or 'ERR'} | {v} |"
         )
     table = "\n".join(lines)
     legend = (
         "\nabsent Y = problem NOT detected without the rule (rule is necessary); "
         "present Y = problem detected with the rule (required).\n"
+        "B: MATCH = detected and cites the expected rule; OTHER = detected but "
+        "cites a different rule; NO = not detected.\n"
         "verdict: IDEAL = absent Y + present Y; OK = present Y but model catches "
         "it without the rule too; FAIL = present N; ERR = run/judge error.\n"
     )
@@ -269,6 +278,7 @@ def report(cases, scored, label, results):
         {"model": label, "rows": [
             {"case": c["id"], "rule": c["rule"], "verdict": v,
              "present_detected": s["present"], "absent_detected": s["absent"],
+             "present_attribution": s["present_attribution"],
              "error": s["error"]} for c, s, v in rows]}, indent=2))
     (results / "table.md").write_text(table + "\n")
     return rows
@@ -311,7 +321,9 @@ def main():
             args.judge_backend, c, absent_out, present_out, judge_model,
             args.reasoning, args.timeout, workroot)
         (results / f"{c['id']}.judge.txt").write_text(raw)
-        return c["id"], {"absent": a, "present": p, "error": err}
+        return c["id"], record(absent=a,
+                               present=None if p is None else p in ("MATCH", "OTHER"),
+                               attribution=p, error=err)
 
     if args.reeval:
         results = Path(args.reeval)
@@ -322,8 +334,7 @@ def main():
             fa = results / f"{c['id']}.absent.txt"
             fp = results / f"{c['id']}.present.txt"
             if not fa.exists() or not fp.exists():
-                return c["id"], {"absent": None, "present": None,
-                                 "error": "missing output"}
+                return c["id"], record(error="missing output")
             return judge_and_save(c, fa.read_text(), fp.read_text())
 
         with ThreadPoolExecutor(max_workers=args.jobs) as pool:
@@ -358,8 +369,7 @@ def main():
 
     def do_judge(c):
         if c["id"] in review_err:
-            return c["id"], {"absent": None, "present": None,
-                             "error": review_err[c["id"]]}
+            return c["id"], record(error=review_err[c["id"]])
         o = outs[c["id"]]
         return judge_and_save(c, o["absent"], o["present"])
 

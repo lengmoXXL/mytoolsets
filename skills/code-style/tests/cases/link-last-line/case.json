@@ -1,0 +1,9 @@
+{
+  "rule": "No Bugs",
+  "context": "link converts paths found in text into OSC 8 file:// hyperlinks, reading args or stdin line by line; the header promises that non-path text and whitespace are preserved.",
+  "expected": {
+    "location": "link.sh, stdin loop: while IFS= read -r line; do",
+    "rule": "No Bugs",
+    "reason": "read returns non-zero on a final line that has no trailing newline, so the loop body never runs for it: printf 'f.txt' | link (f.txt exists, no trailing newline) produces no output at all, dropping the last unterminated line instead of preserving and linkifying it."
+  }
+}
