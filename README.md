@@ -25,6 +25,7 @@ configs/
 │   ├── ghostty-terminfo.sh
 │   ├── git-prune-merged.sh
 │   ├── herdr.sh               # Herdr + 配置（configs/herdr/config.toml）
+│   ├── link.sh
 │   ├── nvim.sh                # Neovim + 配置（configs/nvim）
 │   ├── nvim-ft.sh
 │   ├── ossutil.sh
@@ -134,6 +135,7 @@ configs/
     ├── doc-research-init.sh      # 初始化文献调研项目（raw/tr/dist + 工作流 README）
     ├── git-prune-merged.sh
     ├── latest-version.sh        # 查询工具的上游最新版本（--all 列出全部）
+    ├── link.sh                  # 文本中的路径 -> OSC 8 终端超链接（存在性校验）
     ├── nvim_ft.py               # 按 git URL 管理 Neovim filetype
     ├── pj/                      # 仓库命令工具
     │   └── ...
