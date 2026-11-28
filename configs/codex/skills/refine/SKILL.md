@@ -20,7 +20,7 @@ independent checker each round rather than self-certifying.
 4. Read the findings. For each, either fix it or reject it with a concrete reason
    grounded in the criteria or the code. Keep every rejection and its reason in
    your response so the next checker pass sees it.
-5. Repeat from step 2 with a new checker pass. Cap at 6 rounds; if findings
+5. Repeat from step 2 with a new checker pass. Cap at 30 rounds; if findings
    remain at the cap, stop and report them to the user instead of looping.
 6. Declare done only after a checker pass returns no findings.
 
