@@ -125,6 +125,7 @@ fi
 # 用 tomllib 判断缺键后按文本插入，保留其余内容。
 # 0.162+ 默认 1 行/滚轮事件，xterm.js 类终端下滚动偏慢，3.0 恢复旧速度。
 # file_opener=none：关掉 codex 自带的编辑器预览引用链接，文件引用走 AGENTS file-links 的 file:// OSC 链接。
+# approval_policy/sandbox_mode：yolo 权限放配置层，不用 --dangerously-bypass flag（remote resume 拒绝 flag 覆盖）。
 codex_config="${HOME}/.codex/config.toml"
 config_tmp="$(mktemp)"
 if ! python3 - "$codex_config" > "$config_tmp" <<'PY'
@@ -160,8 +161,13 @@ if "mouse_scroll_speed" not in doc.get("tui", {}):
             lines.append("\n")
         lines.extend(["\n", "[tui]\n", line])
 
-if "file_opener" not in doc:
-    line = 'file_opener = "none"\n'
+for key, line in (
+    ("file_opener", 'file_opener = "none"\n'),
+    ("approval_policy", 'approval_policy = "never"\n'),
+    ("sandbox_mode", 'sandbox_mode = "danger-full-access"\n'),
+):
+    if key in doc:
+        continue
     for i, l in enumerate(lines):
         if re.match(r"\s*\[", l):
             lines.insert(i, line)
@@ -179,7 +185,7 @@ except tomllib.TOMLDecodeError as e:
 sys.stdout.write(text)
 PY
 then
-    echo "警告: 跳过 config.toml 默认键写入（mouse_scroll_speed/file_opener）" >&2
+    echo "警告: 跳过 config.toml 默认键写入" >&2
 elif [[ -s "$config_tmp" ]]; then
     write_file_if_changed "$codex_config" "$config_tmp"
 fi

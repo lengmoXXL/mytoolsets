@@ -20,8 +20,8 @@ export default {
   workspaces: [
     { id: 'terminal-agent',
       repo: 'https://github.com/lengmoXXL/WangCai-terminal-agent',
-      // codex 工作区默认 yolo：命令都在远端 VM 里跑，本机不执行。
-      config: { machines: local.machines, codex: { enabled: true, args: ['--dangerously-bypass-approvals-and-sandbox'] } },
+      // codex 默认 yolo：权限写在 ~/.codex/config.toml（install/codex.sh），不用 CLI flag，remote resume 才不拒绝。
+      config: { machines: local.machines, codex: { enabled: true } },
     },
   ],
   tabs: [
