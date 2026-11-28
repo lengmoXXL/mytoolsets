@@ -14,8 +14,9 @@ async function front({ machine, request }: KeyContext) {
 }
 
 export default {
-  // DejaVuSansM Nerd Font 可用 install/fonts.sh 的 dejavu 安装。
-  font: { family: '"DejaVuSansM Nerd Font Mono", monospace' },
+  // DejaVuSansM Nerd Font 可用 install/fonts.sh 的 dejavu 安装；中文回退到等宽的
+  // TsangerYunHei（install/fonts.sh yunhei），CJK 占 2 宽，表格边框才与文字对齐。
+  font: { family: '"DejaVuSansM Nerd Font Mono", "TsangerYunHei", monospace' },
   network: local.network,
   workspaces: [
     { id: 'terminal-agent',
